@@ -1,0 +1,10 @@
+# 永遠不要提交任何含 token 的東西
+.env
+.env.*
+*.token
+*secret*
+sean_rpg_ghcfg*
+
+# 本機雜物
+.DS_Store
+Thumbs.db
