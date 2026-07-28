@@ -6,6 +6,12 @@
 <title>SEAN: Self-Funded</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0C1210">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SELF-FUNDED">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{
   --bg:#0C1210; --panel:#131B18; --panel2:#182320; --line:#22302B;
@@ -320,6 +326,7 @@ section{margin-bottom:18px}
     <div class="ach" id="achList"></div>
   </section>
 
+  <div class="setrow" id="installRow" style="display:none"><button id="installBtn">📲 安裝到主畫面</button></div>
   <div class="setrow"><button id="openSettings">⚙ 同步設定 / 儲存後端</button></div>
 
   <div class="foot">每日 04:00 換日 · 週一 04:00 週常重置<br>唯二的 GAME OVER:爆倉出局 · 在準備室裡老死<br>其他一切都只是掉血。血會回,情報永久保留。</div>
@@ -850,6 +857,29 @@ document.getElementById('setSave').onclick=async ()=>{
 
 /* 離開頁面前,若有待存的 GitHub 變更,盡力補存本機 */
 window.addEventListener('beforeunload',()=>{ if(backend==='github'&&hasLS()){ try{ localStorage.setItem(LSKEY,JSON.stringify(S)); }catch(e){} } });
+
+/* ═══════════════ PWA:安裝 + 離線 ═══════════════ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+let deferredPrompt=null;
+const installRow=document.getElementById('installRow');
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(!isStandalone) installRow.style.display='block'; });
+if(isiOS && !isStandalone){ installRow.style.display='block'; }
+document.getElementById('installBtn').onclick=async ()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const {outcome}=await deferredPrompt.userChoice; deferredPrompt=null;
+    if(outcome==='accepted'){ installRow.style.display='none'; toast('📲 已加入主畫面'); }
+  } else if(isiOS){
+    toast('iPhone:點 Safari 下方分享鍵 → 「加入主畫面」');
+  } else {
+    toast('用瀏覽器選單的「安裝 App / 加到主畫面」');
+  }
+};
+window.addEventListener('appinstalled',()=>{ if(installRow) installRow.style.display='none'; });
 
 init();
 </script>
