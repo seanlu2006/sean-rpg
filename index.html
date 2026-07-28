@@ -178,6 +178,29 @@ section{margin-bottom:18px}
 .card .btnrow .ghost{background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
 
 .foot{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:22px;letter-spacing:.08em;line-height:1.8}
+/* hero quote(有感觸的話,置頂顯眼) */
+.qt.hero{margin-bottom:14px;background:linear-gradient(180deg, rgba(232,180,74,.07), var(--panel));border-color:var(--gold-dim)}
+.qt.hero .herolabel{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+.qt.hero .mark{font-size:28px}
+.qt.hero .body{font-size:17px;font-weight:500;line-height:1.75;min-height:52px;color:#F3E6C8;margin:4px 0 12px}
+
+/* 每日簽到 */
+.checkin{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:14px}
+.checkin .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:8px}
+.checkin .top .t{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+.checkin .top .m{font-family:var(--mono);font-size:10px;color:var(--gold-dim);white-space:nowrap}
+.checkin .cells{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:11px}
+.checkin .cells i{aspect-ratio:.7;border-radius:7px;background:#0A0F0D;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-style:normal;transition:all .3s}
+.checkin .cells i b{font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted)}
+.checkin .cells i span{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted)}
+.checkin .cells i.done{background:linear-gradient(180deg,#F3C766,#C9932F);border-color:var(--gold);box-shadow:0 0 6px rgba(232,180,74,.35)}
+.checkin .cells i.done b,.checkin .cells i.done span{color:#1A1206}
+.checkin .cells i.today{border-color:var(--gold);border-width:2px;animation:pulse 1.6s ease-in-out infinite}
+.checkin .cells i.today span{color:var(--gold)}
+.checkin .btn{width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(180deg,#F3C766,#C9932F);color:#1A1206;font-size:14px;font-weight:700;font-family:var(--sans);letter-spacing:.08em}
+.checkin .btn:active{transform:scale(.98)}
+.checkin .btn.done{background:var(--panel2);color:var(--muted);border:1px solid var(--line);cursor:default;letter-spacing:.1em}
+
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -195,6 +218,22 @@ section{margin-bottom:18px}
 
   <div class="greet" id="greet"></div>
 
+  <div class="qt hero">
+    <div class="herolabel">🪞 有感觸的話 · 放最上面,每天提醒自己</div>
+    <div class="mark">❝</div>
+    <div class="body" id="qtBody"></div>
+    <div class="row">
+      <button id="qtNext">下一句</button>
+      <button id="qtAddToggle">＋ 收藏這句</button>
+      <button id="qtDel" aria-label="刪除這句">刪除</button>
+      <div class="cnt" id="qtCnt"></div>
+    </div>
+    <div class="qtadd" id="qtAddRow">
+      <input id="qtInput" type="text" maxlength="120" placeholder="貼上剛剛讓你有感觸的那句話…">
+      <button id="qtSave">存</button>
+    </div>
+  </div>
+
   <div class="expcard" id="expCard">
     <div class="explabel">
       <div class="t">LV · 生活費自給率</div>
@@ -210,6 +249,12 @@ section{margin-bottom:18px}
       <div class="hint">每次結算自己收入時更新<br>滿級 = 供電切換完成</div>
     </div>
     <div class="milestone" id="milestone"></div>
+  </div>
+
+  <div class="checkin" id="checkinCard">
+    <div class="top"><div class="t">🎁 每日簽到 · 只要出現就有獎</div><div class="m" id="checkinMeta"></div></div>
+    <div class="cells" id="checkinCells"></div>
+    <button class="btn" id="checkinBtn">每日簽到</button>
   </div>
 
   <div class="stats">
@@ -232,24 +277,6 @@ section{margin-bottom:18px}
   <section>
     <div class="sh"><h2>🔮 今日靈魂拷問</h2></div>
     <div class="quest" style="padding:13px 14px;font-size:13px;color:var(--ink)" id="soulQ"></div>
-  </section>
-
-  <section>
-    <div class="sh"><h2>🪞 反思語錄</h2><div class="tag">每日輪播 · 可自行收藏</div></div>
-    <div class="qt">
-      <div class="mark">❝</div>
-      <div class="body" id="qtBody"></div>
-      <div class="row">
-        <button id="qtNext">下一句</button>
-        <button id="qtAddToggle">＋ 收藏新句</button>
-        <button id="qtDel" aria-label="刪除這句">刪除</button>
-        <div class="cnt" id="qtCnt"></div>
-      </div>
-      <div class="qtadd" id="qtAddRow">
-        <input id="qtInput" type="text" maxlength="120" placeholder="貼上 reels 看到的那句話…">
-        <button id="qtSave">存</button>
-      </div>
-    </div>
   </section>
 
   <section>
@@ -365,6 +392,12 @@ const SOULQ = [
   '我現在做的事,通向我的星期二嗎?',
   '這個決定是我在做,還是舊傷口在做?',
   '我現在還在盡興,還是已經在還債了?',
+  '今天我照自己的規則走,還是又憑盤感?',
+  '有沒有一件事,我今天真的「推出去」了?',
+  '我是在為想成為的人努力,還是只在餵當下的爽?',
+  '如果今天可以重來,我會為哪個選擇驕傲?',
+  '我是真的在生活,還是只是在滑過去?',
+  '這週的我,有沒有從一坨肉裡爬起來一點?',
 ];
 const DEFAULT_QUOTES = [
   '準備是最舒服的位置——它永遠不會輸,也永遠不會贏。',
@@ -497,11 +530,13 @@ function setBadge(cls,txt){
 /* ═══════════════ 遊戲日曆(04:00 換日) ═══════════════ */
 function gameNow(){ const d=new Date(); d.setHours(d.getHours()-4); return d; }
 function todayStr(){ const d=gameNow(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function yesterdayStr(){ const d=gameNow(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function weekStr(){ const d=gameNow(); const day=(d.getDay()+6)%7; const mon=new Date(d); mon.setDate(d.getDate()-day); return mon.getFullYear()+'-W'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0'); }
 
 function freshState(){
   return {
     v:2, rate:0, exp:0, streak:0, bestStreak:0, recTotal:0, prep:0,
+    checkinLast:'', checkinStreak:0, checkinTotal:0,
     date: todayStr(), week: weekStr(),
     daily:{}, weekly:{}, main:{}, ach:{},
     soulIdx: Math.floor(Math.random()*SOULQ.length),
@@ -583,6 +618,7 @@ function render(){
   document.getElementById('perfectMsg').classList.toggle('show', DAILY.every(q=>S.daily[q.id]));
 
   renderChain();
+  renderCheckin();
 
   const st=document.getElementById('prepStacks').children;
   for(let i=0;i<3;i++) st[i].classList.toggle('on', i<S.prep);
@@ -608,6 +644,40 @@ function renderChain(){
   }
   box.innerHTML=cells.join('');
   document.getElementById('chainBest').textContent='最長 '+S.bestStreak+' 天';
+}
+
+/* ── 每日簽到:7 天循環,獎勵遞增,只要「出現」就有 ── */
+const CHECKIN_CYCLE=[1,1,2,3,3,5,8];
+function renderCheckin(){
+  const t=todayStr(), y=yesterdayStr();
+  const claimed=S.checkinLast===t;
+  const displayStreak = claimed ? S.checkinStreak : (S.checkinLast===y ? S.checkinStreak+1 : 1);
+  const pos=((displayStreak-1)%7+7)%7;
+  let html='';
+  for(let i=0;i<7;i++){
+    const cls = i<pos ? 'done' : (i===pos ? (claimed?'done':'today') : '');
+    html+=`<i class="${cls}"><b>D${i+1}</b><span>+${CHECKIN_CYCLE[i]}</span></i>`;
+  }
+  document.getElementById('checkinCells').innerHTML=html;
+  const btn=document.getElementById('checkinBtn');
+  if(claimed){ btn.textContent='今天已簽到 ✓'; btn.classList.add('done'); }
+  else { btn.textContent='每日簽到  +'+CHECKIN_CYCLE[pos]+' EXP'; btn.classList.remove('done'); }
+  const consec = claimed ? S.checkinStreak : (S.checkinLast===y ? S.checkinStreak : 0);
+  document.getElementById('checkinMeta').textContent='連續 '+consec+' 天 · 累計 '+S.checkinTotal+' 次';
+}
+function doCheckin(){
+  const t=todayStr(), y=yesterdayStr();
+  if(S.checkinLast===t){ toast('今天已經簽到過囉,明天再來 ✓'); return; }
+  S.checkinStreak = (S.checkinLast===y) ? S.checkinStreak+1 : 1;
+  S.checkinLast=t; S.checkinTotal+=1;
+  const pos=((S.checkinStreak-1)%7+7)%7;
+  const reward=CHECKIN_CYCLE[pos];
+  S.exp+=reward;
+  if(pos===6){ toast('🎉 七日簽到滿一輪!+'+reward+' EXP · 你就是那個「有出現」的人'); sfxLoot('legend'); }
+  else if(reward>=3){ toast('✅ 簽到 +'+reward+' EXP · 連續 '+S.checkinStreak+' 天,火有在燒'); sfxLoot('rare'); }
+  else { toast('✅ 簽到 +'+reward+' EXP · 連續 '+S.checkinStreak+' 天'); sfxCheck(); }
+  buzz(20);
+  scheduleSave(); render();
 }
 
 /* ═══════════════ 互動 ═══════════════ */
@@ -697,6 +767,9 @@ function openLoot(){
   scheduleSave();
 }
 document.getElementById('lootClose').onclick=()=>{ document.getElementById('lootModal').classList.remove('show'); render(); };
+
+/* 每日簽到 */
+document.getElementById('checkinBtn').onclick=doCheckin;
 
 /* 語錄 */
 document.getElementById('qtNext').onclick=()=>{ if(!S.quotes.length)return; S.quoteIdx=(S.quoteIdx+1)%S.quotes.length; scheduleSave(); render(); };
