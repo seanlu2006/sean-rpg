@@ -579,14 +579,15 @@ function rollover(){
     if(allDone){ S.streak+=1; S.history[S.date]=true; }
     else { S.streak=0; }
     if(S.streak>S.bestStreak) S.bestStreak=S.streak;
-    S.daily={}; S.date=t;
+    for(const k in S.daily) delete S.daily[k];   // 原地清空:toggle() 手上的 state 參照才不會變成孤兒
+    S.date=t;
     S.soulIdx=Math.floor(Math.random()*SOULQ.length);
     S.greetIdx=Math.floor(Math.random()*GREETS.length);
     if(S.quotes.length) S.quoteIdx=(S.quoteIdx+1)%S.quotes.length;
     S.lastPerfect='';
     checkAutoAch();
   }
-  if(S.week!==w){ S.weekly={}; S.week=w; }
+  if(S.week!==w){ for(const k in S.weekly) delete S.weekly[k]; S.week=w; }
 }
 
 /* ═══════════════ 渲染 ═══════════════ */
@@ -722,6 +723,7 @@ function bindQuests(){
 }
 
 function toggle(id,state,defs,isDaily,el){
+  rollover();   // 頁面開著跨過 04:00、或剛載入舊存檔時,先結算換日,否則會把完美記到錯的日期
   const q=defs.find(x=>x.id===id);
   const was=!!state[id];
   state[id]=!was;
@@ -834,6 +836,7 @@ document.getElementById('setSave').onclick=async ()=>{
     if(remote){                           // 雲端已有存檔 → 問要不要覆蓋本地
       if(confirm('雲端已有存檔。要用雲端進度覆蓋目前畫面嗎?\n(取消 = 用目前畫面覆蓋雲端)')){
         S=migrate(remote);
+        rollover();   // 載進來的存檔可能是好幾天前的,一定要換日
       }
     }
     backend='cloud'; setBadge('ok','● SYNCED');
@@ -846,6 +849,14 @@ document.getElementById('setSave').onclick=async ()=>{
     toast(e.message==='unauthorized' ? '通行碼不對,再確認一次' : '連線失敗:確認後端已部署');
   }
 };
+
+/* 分頁重新回到前景:可能已經跨日,補跑換日並重繪 */
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible' || !S) return;
+  const before=S.date, beforeWeek=S.week;
+  rollover();
+  if(S.date!==before || S.week!==beforeWeek){ scheduleSave(); render(); }
+});
 
 /* 離開頁面前,若有待存的雲端變更,盡力補存本機 */
 window.addEventListener('beforeunload',()=>{ if(backend==='cloud'&&hasLS()){ try{ localStorage.setItem(LSKEY,JSON.stringify(S)); }catch(e){} } });
