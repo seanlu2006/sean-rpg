@@ -7,4 +7,4 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding       = "DB"            # 程式裡用 env.DB 取用
 database_name = "sean-rpg-db"
-database_id   = "PLACEHOLDER_FILL_AFTER_CREATE"
+database_id   = "cceefa0e-96f6-4aa7-9e7f-df0f89b2ea26"
