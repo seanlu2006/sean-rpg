@@ -348,15 +348,12 @@ section{margin-bottom:18px}
 <!-- 設定 modal -->
 <div class="modal" id="setModal">
   <div class="card">
-    <h3>⚙ 儲存後端設定</h3>
+    <h3>⚙ 同步設定</h3>
     <div class="note" id="setNote">
-      填入後,進度會自動同步到你的 GitHub private repo(改動後幾秒存一次)。<br>
-      token 只存在這台裝置的瀏覽器,<b>永遠不會寫進這個檔案</b>。請務必使用<b>只授權單一 private repo</b> 的 fine-grained token。
+      輸入通行碼後,進度會自動同步到你自己的 Cloudflare 後端(改動後 1~2 秒存一次)。<br>
+      <b>換裝置只要再輸入同一組通行碼</b>,不用再貼任何 API token。通行碼只存在這台裝置的瀏覽器。
     </div>
-    <div class="fld"><label>GitHub owner(你的帳號名)</label><input id="cfgOwner" placeholder="e.g. seanchang" autocomplete="off"></div>
-    <div class="fld"><label>Repo 名稱(private)</label><input id="cfgRepo" placeholder="e.g. sean-rpg-save" autocomplete="off"></div>
-    <div class="fld"><label>檔案路徑</label><input id="cfgPath" placeholder="save.json" autocomplete="off"></div>
-    <div class="fld"><label>Fine-grained PAT(contents: read+write)</label><input id="cfgToken" type="password" placeholder="github_pat_..." autocomplete="off"></div>
+    <div class="fld"><label>通行碼</label><input id="cfgKey" type="password" placeholder="你設定的那組通行碼" autocomplete="off"></div>
     <div class="btnrow">
       <button class="ghost" id="setLocal">只用本機</button>
       <button class="primary" id="setSave">連接並同步</button>
@@ -445,61 +442,62 @@ const LOOT = {
 };
 
 /* ═══════════════ 儲存後端(可切換) ═══════════════ */
-/* backend: 'github' | 'local' | 'memory'
-   - github: 讀寫 GitHub Contents API,token 存 localStorage(key: GH_CFG),永不寫進檔案
+/* backend: 'cloud' | 'local' | 'memory'
+   - cloud : 打自家 /api/save(Cloudflare Pages Functions + D1)
+             裝置端只存一組通行碼,GitHub token 不再出現在任何裝置上
    - local : localStorage
    - memory: 都不可用時的降級,僅存在記憶體 */
-const LSKEY = 'sean_rpg_v2';
-const CFGKEY = 'sean_rpg_ghcfg';
+const LSKEY  = 'sean_rpg_v2';
+const CFGKEY = 'sean_rpg_cfcfg';
+const API    = '/api/save';
 let backend = 'memory';
-let ghCfg = null;      // {owner, repo, path, token}
-let ghSha = null;      // 目前檔案的 sha,PUT 時需要
+let cfKey = null;      // 通行碼,只存這台裝置
 let S = null;
 
 function loadCfg(){
-  try{ const raw = localStorage.getItem(CFGKEY); if(raw) ghCfg = JSON.parse(raw); }catch(e){}
+  try{ const raw = localStorage.getItem(CFGKEY); if(raw) cfKey = JSON.parse(raw).key || null; }catch(e){}
+}
+function saveCfg(){
+  try{ localStorage.setItem(CFGKEY, JSON.stringify({key:cfKey})); return true; }catch(e){ return false; }
 }
 function hasLS(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } }
 
-async function ghGet(){
-  const url = `https://api.github.com/repos/${ghCfg.owner}/${ghCfg.repo}/contents/${ghCfg.path}`;
-  const r = await fetch(url, {headers:{Authorization:`Bearer ${ghCfg.token}`, Accept:'application/vnd.github+json'}});
-  if(r.status===404){ ghSha=null; return null; }          // 檔案還沒建立
+async function apiGet(){
+  const r = await fetch(API, {headers:{'X-RPG-Key':cfKey}, cache:'no-store'});
+  if(r.status===401) throw new Error('unauthorized');
   if(!r.ok) throw new Error('GET '+r.status);
   const j = await r.json();
-  ghSha = j.sha;
-  const txt = decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))));
-  return JSON.parse(txt);
+  return j.save;                 // 還沒存過會是 null
 }
-async function ghPut(state){
-  const url = `https://api.github.com/repos/${ghCfg.owner}/${ghCfg.repo}/contents/${ghCfg.path}`;
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(state,null,2))));
-  const body = {message:`rpg save ${new Date().toISOString()}`, content};
-  if(ghSha) body.sha = ghSha;
-  const r = await fetch(url,{method:'PUT',headers:{Authorization:`Bearer ${ghCfg.token}`,Accept:'application/vnd.github+json'},body:JSON.stringify(body)});
+async function apiPut(state){
+  const r = await fetch(API, {
+    method:'PUT',
+    headers:{'X-RPG-Key':cfKey, 'Content-Type':'application/json'},
+    body: JSON.stringify(state)
+  });
+  if(r.status===401) throw new Error('unauthorized');
   if(!r.ok) throw new Error('PUT '+r.status);
-  const j = await r.json(); ghSha = j.content.sha;
 }
 
 async function backendLoad(){
   loadCfg();
-  if(ghCfg && ghCfg.owner && ghCfg.repo && ghCfg.token){
+  if(cfKey){
     try{
       setBadge('saving','● 連線中');
-      const remote = await ghGet();
-      backend = 'github';
+      const remote = await apiGet();
+      backend = 'cloud';
       setBadge('ok','● SYNCED');
-      return remote;   // 可能是 null(新檔)
+      return remote;
     }catch(e){
       backend = hasLS() ? 'local' : 'memory';
       setBadge('err','● 同步失敗');
-      toast('GitHub 連線失敗,暫時使用本機。點右上徽章可重設');
-      // 失敗時 fallback 讀本機
+      toast(e.message==='unauthorized' ? '通行碼不對,暫時使用本機。點右上徽章重設'
+                                       : '雲端連線失敗,暫時使用本機。點右上徽章可重設');
       if(backend==='local'){ try{ const raw=localStorage.getItem(LSKEY); return raw?JSON.parse(raw):null; }catch(_){}}
       return null;
     }
   }
-  // 沒設定 GitHub → 本機
+  // 沒設定通行碼 → 本機
   if(hasLS()){ backend='local'; setBadge('local','● LOCAL'); try{ const raw=localStorage.getItem(LSKEY); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
   backend='memory'; setBadge('err','● 無儲存'); return null;
 }
@@ -507,18 +505,18 @@ async function backendLoad(){
 let saveTimer=null, savingNow=false, pendingSave=false;
 function scheduleSave(){
   if(backend==='local'){ try{ localStorage.setItem(LSKEY, JSON.stringify(S)); }catch(e){} return; }
-  if(backend!=='github') return;      // memory: 不存
-  // GitHub: 改動後延遲 3 秒自動存(debounce)
+  if(backend!=='cloud') return;       // memory: 不存
+  // 雲端:改動後延遲 1.5 秒自動存(debounce)。D1 寫入很便宜,不必像 GitHub commit 等 3 秒
   clearTimeout(saveTimer);
   setBadge('saving','● 待存…');
-  saveTimer = setTimeout(runGhSave, 3000);
+  saveTimer = setTimeout(runCloudSave, 1500);
 }
-async function runGhSave(){
+async function runCloudSave(){
   if(savingNow){ pendingSave=true; return; }
   savingNow=true;
   try{
     setBadge('saving','● 儲存中');
-    await ghPut(S);
+    await apiPut(S);
     setBadge('ok','● SYNCED');
   }catch(e){
     setBadge('err','● 存檔失敗');
@@ -526,7 +524,7 @@ async function runGhSave(){
     if(hasLS()){ try{ localStorage.setItem(LSKEY, JSON.stringify(S)); }catch(_){}}
   }
   savingNow=false;
-  if(pendingSave){ pendingSave=false; runGhSave(); }
+  if(pendingSave){ pendingSave=false; runCloudSave(); }
 }
 function setBadge(cls,txt){
   const b=document.getElementById('synBadge');
@@ -568,8 +566,8 @@ async function init(){
   rollover();
   render();
   // 首次且沒設定過後端 → 提示可連 GitHub(不強迫)
-  if(backend!=='github' && !localStorage.getItem('sean_rpg_hint')){
-    setTimeout(()=>toast('想跨裝置同步?點右上「● LOCAL」設定 GitHub'),1200);
+  if(backend!=='cloud' && !localStorage.getItem('sean_rpg_hint')){
+    setTimeout(()=>toast('想跨裝置同步?點右上「● LOCAL」輸入通行碼'),1200);
     try{ localStorage.setItem('sean_rpg_hint','1'); }catch(e){}
   }
 }
@@ -814,49 +812,43 @@ document.getElementById('openSettings').onclick=openSettings;
 document.getElementById('synBadge').onclick=openSettings;
 function openSettings(){
   loadCfg();
-  document.getElementById('cfgOwner').value=ghCfg?.owner||'';
-  document.getElementById('cfgRepo').value=ghCfg?.repo||'';
-  document.getElementById('cfgPath').value=ghCfg?.path||'save.json';
-  document.getElementById('cfgToken').value=ghCfg?.token||'';
+  document.getElementById('cfgKey').value=cfKey||'';
   setModal.classList.add('show');
 }
 document.getElementById('setLocal').onclick=()=>{
   try{ localStorage.removeItem(CFGKEY); }catch(e){}
-  ghCfg=null; backend=hasLS()?'local':'memory';
+  cfKey=null; backend=hasLS()?'local':'memory';
   setBadge(backend==='local'?'local':'err', backend==='local'?'● LOCAL':'● 無儲存');
   if(backend==='local'){ try{ localStorage.setItem(LSKEY,JSON.stringify(S)); }catch(e){} }
   setModal.classList.remove('show'); toast('已切回本機儲存');
 };
 document.getElementById('setSave').onclick=async ()=>{
-  const owner=document.getElementById('cfgOwner').value.trim();
-  const repo=document.getElementById('cfgRepo').value.trim();
-  const path=(document.getElementById('cfgPath').value.trim()||'save.json');
-  const token=document.getElementById('cfgToken').value.trim();
-  if(!owner||!repo||!token){ toast('owner / repo / token 都要填'); return; }
-  ghCfg={owner,repo,path,token};
-  try{ localStorage.setItem(CFGKEY,JSON.stringify(ghCfg)); }catch(e){ toast('本機無法儲存設定'); }
+  const key=document.getElementById('cfgKey').value.trim();
+  if(!key){ toast('先輸入通行碼'); return; }
+  cfKey=key;
+  if(!saveCfg()) toast('本機無法儲存設定');
   setModal.classList.remove('show');
   setBadge('saving','● 連線中');
   try{
-    const remote=await ghGet();          // 測試連線 + 抓遠端
-    if(remote){                          // 遠端已有存檔 → 詢問是否覆蓋本地
+    const remote=await apiGet();          // 測試通行碼 + 抓雲端
+    if(remote){                           // 雲端已有存檔 → 問要不要覆蓋本地
       if(confirm('雲端已有存檔。要用雲端進度覆蓋目前畫面嗎?\n(取消 = 用目前畫面覆蓋雲端)')){
         S=migrate(remote);
       }
     }
-    backend='github'; setBadge('ok','● SYNCED');
-    await runGhSave();                    // 立即寫一次
-    toast('✅ 已連接 GitHub,之後自動同步');
+    backend='cloud'; setBadge('ok','● SYNCED');
+    await runCloudSave();                 // 立即寫一次
+    toast('✅ 已連上雲端,之後自動同步');
     render();
   }catch(e){
     backend=hasLS()?'local':'memory';
     setBadge('err','● 連線失敗');
-    toast('連線失敗:檢查 repo 名稱與 token 權限');
+    toast(e.message==='unauthorized' ? '通行碼不對,再確認一次' : '連線失敗:確認後端已部署');
   }
 };
 
-/* 離開頁面前,若有待存的 GitHub 變更,盡力補存本機 */
-window.addEventListener('beforeunload',()=>{ if(backend==='github'&&hasLS()){ try{ localStorage.setItem(LSKEY,JSON.stringify(S)); }catch(e){} } });
+/* 離開頁面前,若有待存的雲端變更,盡力補存本機 */
+window.addEventListener('beforeunload',()=>{ if(backend==='cloud'&&hasLS()){ try{ localStorage.setItem(LSKEY,JSON.stringify(S)); }catch(e){} } });
 
 /* ═══════════════ PWA:安裝 + 離線 ═══════════════ */
 if('serviceWorker' in navigator){

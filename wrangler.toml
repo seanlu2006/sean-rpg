@@ -1,0 +1,10 @@
+# SEAN: Self-Funded — Cloudflare Pages 設定
+name = "sean-rpg"
+compatibility_date = "2026-09-04"
+pages_build_output_dir = "."
+
+# D1:存檔資料庫。database_id 由 `wrangler d1 create` 產生後填入。
+[[d1_databases]]
+binding       = "DB"            # 程式裡用 env.DB 取用
+database_name = "sean-rpg-db"
+database_id   = "PLACEHOLDER_FILL_AFTER_CREATE"

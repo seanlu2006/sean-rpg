@@ -1,43 +1,65 @@
 # SEAN: Self-Funded
 
-一個單檔 HTML 的人生 RPG 打卡面板。純前端、無後端，進度存在你自己的 GitHub private repo。
+一個單檔 HTML 的人生 RPG 打卡面板。前端純靜態，存檔放在自己的 Cloudflare D1。
 
-- **線上開啟**：GitHub Pages（見下方）
-- **存檔位置**：另一個 private repo（預設 `sean-rpg-save`）裡的 `save.json`
-- **程式碼**：就這個 `index.html`，純靜態、無 build step
+- **前端**：`index.html`（單檔，無 build step）
+- **後端**：`functions/api/save.js`（Cloudflare Pages Functions）
+- **資料庫**：Cloudflare D1（`schema.sql`）
+- **PWA**：可加到主畫面、離線開啟（`manifest.json` + `sw.js`）
 
-## 運作方式
+## 架構
 
-面板用瀏覽器直接打 GitHub Contents API 讀寫 `save.json`。沒設定 token 時自動降級成瀏覽器本機儲存（localStorage），連本機都不行時降級成記憶體（不存）。
+```
+Cloudflare Pages（同源）
+  ├─ index.html            面板本體
+  └─ functions/api/save.js  GET/PUT 存檔
+        └─ D1  saves 資料表
+```
 
-## 首次設定（在面板裡做）
+面板打自家的 `/api/save`，帶一個 `X-RPG-Key` 標頭。伺服器拿它跟 Cloudflare 上的密鑰 `RPG_KEY` 比對。
 
-1. 打開部署好的網址。
-2. 點右上角徽章 `● LOCAL`（或最下面「⚙ 同步設定」）。
-3. 填入：
-   - **owner**：你的 GitHub 帳號名
-   - **repo**：存檔 repo 名稱（`sean-rpg-save`）
-   - **path**：`save.json`
-   - **token**：下面產生的 fine-grained PAT
-4. 按「連接並同步」。右上徽章變 `● SYNCED` 就成功了。
+**為什麼從 GitHub 搬過來**：舊版把 GitHub fine-grained token 存在每一台裝置的 localStorage，換裝置就得重貼一次 90 幾字元的 token，token 過期還要每台重換。現在改成「**憑證留在伺服器，裝置只記一組你背得起來的通行碼**」——換裝置只要再打一次同一組碼。
 
-## 產生 Token（務必自己做，token 不要給任何人／AI）
+## 沒設定通行碼時
 
-GitHub → Settings → Developer settings → **Fine-grained tokens** → Generate new token
+自動降級成 localStorage 本機儲存；連 localStorage 都不可用時降級成記憶體（不存）。這段邏輯已寫好。
 
-- **Repository access**：Only select repositories → 只選 `sean-rpg-save`
-- **Permissions**：Repository permissions → **Contents: Read and write**（其他全部 No access）
-- 產生後複製 `github_pat_...`，貼進面板設定。
+## 部署
+
+需要先 `npx wrangler login`（互動式，要在你自己的終端機跑）。
+
+```bash
+# 1. 建 D1，把回傳的 database_id 填進 wrangler.toml
+npx wrangler d1 create sean-rpg-db
+
+# 2. 建表
+npx wrangler d1 execute sean-rpg-db --remote --file=schema.sql
+
+# 3. 匯入舊存檔（可選，只做一次）
+npx wrangler d1 execute sean-rpg-db --remote --file=seed-save.sql
+
+# 4. 部署
+npx wrangler pages deploy .
+
+# 5. 設定通行碼（互動輸入，不會留在指令歷史）
+npx wrangler pages secret put RPG_KEY --project-name sean-rpg
+```
+
+改完前端重跑第 4 步即可。
 
 ## 安全鐵律
 
-- 存檔 repo **必須 private**。
-- Token 用 **fine-grained、單一 repo、僅 Contents 讀寫**。不要用 classic token、不要給 `repo` 全權。
-- Token 只存在你自己裝置的瀏覽器 localStorage（key: `sean_rpg_ghcfg`），**永遠不會**寫進這個 repo。
-- Token 外洩時：到 GitHub 撤銷該 token 即可，損失僅限存檔 repo。
-- `index.html` 可以公開，但**永遠不要**把任何含 token 的檔案或 `.env` 提交上來（已加 `.gitignore` 防呆）。
+- **通行碼建議 12 字元以上。** API 端點是公開的，太短的碼會被暴力猜。
+- `RPG_KEY` 只放 Cloudflare secret，**不要**寫進 `wrangler.toml` 或任何檔案。
+- 面板本身不含任何密鑰，`index.html` 可以公開。
+- `.dev.vars`、`.wrangler/` 已在 `.gitignore` 裡，不要提交。
+- 想撤銷所有裝置的存取：重設 `RPG_KEY` 即可，每台裝置需重新輸入新碼。
 
 ## 已知邊界
 
-- 多裝置**同時**寫入可能 sha 衝突（後寫覆蓋前寫）。單人使用幾乎不會遇到；PUT 失敗會 fallback 寫本機，不會壞資料。
+- 多裝置**同時**寫入是最後寫的贏（單人使用幾乎不會遇到）。PUT 失敗會 fallback 寫本機，不會壞資料。
 - 打勾音效用 WebAudio 合成、震動用 `navigator.vibrate`；iOS Safari 需先互動一次才會出聲，屬正常。
+
+## 舊版
+
+`sean-rpg-save` 這個 private repo 是舊的 GitHub 存檔後端，遷移完成後可以留著當歷史備份，面板已不再讀寫它。
