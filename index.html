@@ -103,9 +103,9 @@ button{font-family:inherit;color:inherit}
 /* ── 連印卷軸 ── */
 .scroll{margin:14px 0 0;padding:14px;border:1px solid var(--line);background:var(--paper2);overflow:hidden}
 .scroll .cap{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:var(--faint);letter-spacing:.25em;margin-bottom:10px}
-.seals{display:grid;grid-template-columns:repeat(15,1fr);gap:5px}
+.seals{display:grid;grid-template-columns:repeat(15,1fr);gap:4px}
 .seals i{aspect-ratio:1;border:1px solid var(--line);border-radius:3px;display:grid;place-items:center;
-  font-size:10px;font-weight:900;color:transparent;transform:rotate(-2deg);font-style:normal}
+  font-size:9px;line-height:1;min-width:0;min-height:0;font-weight:900;color:transparent;transform:rotate(-2deg);font-style:normal}
 .seals i.on{background:var(--vermilion-deep);color:var(--paper);border-color:var(--vermilion-deep)}
 .seals i.today{border:1.5px solid var(--vermilion);animation:breathe 2s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.5}50%{opacity:1}}
@@ -125,7 +125,7 @@ button{font-family:inherit;color:inherit}
 .join .cap{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:var(--faint);letter-spacing:.25em;margin-bottom:10px}
 .join .cells{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}
 .join .cells i{aspect-ratio:.86;border:1px solid var(--line);border-radius:3px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:2px;font-style:normal;transform:rotate(-2deg)}
+  align-items:center;justify-content:center;gap:2px;min-width:0;min-height:0;font-style:normal;transform:rotate(-2deg)}
 .join .cells i b{font-size:12px;font-weight:900;color:transparent;line-height:1}
 .join .cells i em{font-size:9px;font-style:normal;color:var(--faint);letter-spacing:.05em}
 .join .cells i.done{background:var(--vermilion-deep);border-color:var(--vermilion-deep)}
@@ -247,7 +247,8 @@ body.sealed .sealnote{display:block}
 /* ── 籤詩 ── */
 .omikuji-back{position:fixed;inset:0;z-index:210;display:none;justify-content:center;align-items:flex-start;background:rgba(38,34,28,.35)}
 .omikuji-back.show{display:flex}
-.omikuji{width:210px;background:var(--paper);border:1px solid var(--ink);border-top:none;padding:26px 18px 22px;text-align:center;
+.omikuji{width:210px;background:var(--paper);border:1px solid var(--ink);border-top:none;
+  padding:calc(26px + env(safe-area-inset-top)) 18px 22px;text-align:center;
   animation:draw .7s cubic-bezier(.2,.9,.25,1)}
 @keyframes draw{0%{transform:translateY(-100%)}100%{transform:translateY(0)}}
 .omikuji .grade{font-size:30px;font-weight:900;letter-spacing:.2em;color:var(--vermilion-deep);
