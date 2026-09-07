@@ -106,6 +106,7 @@ button{font-family:inherit;color:inherit}
 .seals{display:grid;grid-template-columns:repeat(15,1fr);gap:4px}
 .seals i{aspect-ratio:1;border:1px solid var(--line);border-radius:3px;display:grid;place-items:center;
   font-size:9px;line-height:1;min-width:0;min-height:0;font-weight:900;color:transparent;transform:rotate(-2deg);font-style:normal}
+/* 印文只有 9px,壓在 --vermilion 上僅 4.36:1;改朱的深階 → 5.76:1,過 AA */
 .seals i.on{background:var(--vermilion-deep);color:var(--paper);border-color:var(--vermilion-deep)}
 .seals i.today{border:1.5px solid var(--vermilion);animation:breathe 2s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.5}50%{opacity:1}}
@@ -272,6 +273,8 @@ body.sealed .sealnote{display:block}
 .sheet .btnrow button{flex:1;padding:11px;cursor:pointer;font-size:13px;letter-spacing:.25em;font-family:inherit}
 .sheet .btnrow .primary{background:var(--ink);border:1px solid var(--ink);color:var(--paper);font-weight:700}
 .sheet .btnrow .ghost{background:none;border:1px solid var(--line);color:var(--ink-soft)}
+.sheet .askbody{font-size:14px;line-height:2.1;color:var(--ink);text-align:center;letter-spacing:.05em;margin-bottom:22px}
+.sheet .askbody .warn{display:block;font-size:12px;color:var(--vermilion-deep);margin-top:8px;letter-spacing:.08em}
 .sheet .ver{font-size:10px;color:var(--faint);letter-spacing:.2em;text-align:center;margin-top:16px;line-height:2}
 .sheet .ver button{background:none;border:none;color:var(--faint);font-size:10px;letter-spacing:.2em;cursor:pointer;text-decoration:underline;font-family:inherit}
 
@@ -281,7 +284,11 @@ body.sealed .sealnote{display:block}
   transition:all .3s cubic-bezier(.2,.8,.2,1);z-index:230;max-width:86vw;text-align:center;letter-spacing:.05em}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
-@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+  /* 長按進度條靠 transition 畫,降級後改用即時外框當回饋 */
+  .in-cell.holding{outline:1.5px solid var(--vermilion);outline-offset:-4px}
+}
 </style>
 </head>
 <body>
@@ -295,6 +302,7 @@ body.sealed .sealnote{display:block}
       <div class="tags">
         <span class="tag">修 行 第 一 章 · 策 略 成 型</span>
         <span class="tag" id="hdToday"></span>
+        <span class="tag" id="hdExp"></span>
       </div>
     </div>
     <div class="title">自給修行</div>
@@ -447,6 +455,18 @@ body.sealed .sealnote{display:block}
   </div>
 </div>
 
+<!-- 請示(取代系統 confirm:系統彈窗是全檔唯一沒被翻成道場語言的元件) -->
+<div class="modal" id="askModal">
+  <div class="sheet">
+    <h3>請 示</h3>
+    <div class="askbody" id="askBody"></div>
+    <div class="btnrow">
+      <button class="ghost" id="askNo">止</button>
+      <button class="primary" id="askYes">可</button>
+    </div>
+  </div>
+</div>
+
 <!-- 奧(設定) -->
 <div class="modal" id="setModal">
   <div class="sheet">
@@ -554,17 +574,20 @@ function cnNum(n){
   if(n < 10) return CN[n];
   if(n < 20) return '十' + (n % 10 ? CN[n % 10] : '');
   if(n < 100){ const t = Math.floor(n / 10), o = n % 10; return CN[t] + '十' + (o ? CN[o] : ''); }
+  /* 巢狀時 10~19 要寫「一十X」:二百一十四,不是二百十四 */
+  const sub = r => r < 20 ? '一十' + (r % 10 ? CN[r % 10] : '') : cnNum(r);
   if(n < 1000){ const h = Math.floor(n / 100), r = n % 100;
-    return CN[h] + '百' + (r === 0 ? '' : (r < 10 ? '零' + CN[r] : cnNum(r))); }
+    return CN[h] + '百' + (r === 0 ? '' : (r < 10 ? '零' + CN[r] : sub(r))); }
   if(n < 10000){ const k = Math.floor(n / 1000), r = n % 1000;
-    return CN[k] + '千' + (r === 0 ? '' : (r < 100 ? '零' + cnNum(r) : cnNum(r))); }
+    return CN[k] + '千' + (r === 0 ? '' : (r < 100 ? '零' + (r < 10 ? CN[r] : sub(r)) : cnNum(r))); }
   return String(n);
 }
 /* EXP:個位用大寫(壹貳參伍),十以上用常用漢數字(十五、三十) */
 function expNum(n){ return n < 10 ? CN_UP[Math.max(0, n)] : cnNum(n); }
 /* 日期:二十以上用廿、卅 */
 function dayNum(n){
-  if(n <= 10) return CN[n];
+  if(n < 10)  return CN[n];
+  if(n === 10) return '十';        /* CN 只到索引 9,這裡不能用 CN[10] */
   if(n < 20)  return '十' + CN[n % 10];
   if(n === 20) return '二十';
   if(n < 30)  return '廿' + CN[n % 10];
@@ -679,6 +702,7 @@ function freshState(){
     marks:{},            // {'YYYY-MM-DD': n}    當日落印數 → 墨K線
     bells:{},            // {'YYYY-MM': n}       月鐘響
     sealed:'',           // 已封存的日期
+    allSealDate:'',      // 皆印演出與籤詩:每日僅一次
     since:'',            // 修行第一日
     quotes: DEFAULT_QUOTES.slice(), quoteIdx: 0
   };
@@ -706,7 +730,7 @@ async function init(){
   if(!S.since) S.since = S.date || todayStr();
   rollover();
   render();
-  if(backend!=='cloud' && !localStorage.getItem('sean_rpg_hint')){
+  if(backend!=='cloud' && hasLS() && !localStorage.getItem('sean_rpg_hint')){
     setTimeout(()=>toast('想跨裝置同步?點頁尾印記輸入通行碼'),1200);
     try{ localStorage.setItem('sean_rpg_hint','1'); }catch(e){}
   }
@@ -716,10 +740,15 @@ function rollover(){
   const t=todayStr(), w=weekStr();
   if(S.date!==t){
     const allDone = DAILY.every(q=>S.daily[q.id]);
-    if(allDone){ S.streak+=1; S.history[S.date]=true; }
-    else { S.streak=0; }                       // 休關一日:不歸咎、不標紅
+    if(allDone){
+      /* toggle() 落第七印時已經加過一次,這裡不能再加(否則一個完美日算兩天) */
+      if(S.lastPerfect!==S.date) S.streak+=1;
+      S.history[S.date]=true;
+    } else { S.streak=0; }                     // 休關一日:不歸咎、不標紅
     if(S.streak>S.bestStreak) S.bestStreak=S.streak;
     S.marks[S.date]=DAILY.filter(q=>S.daily[q.id]).length;
+    /* 中間隔了沒開過的空白日 → 連印斷在那裡,不能一路接下去 */
+    if(S.date!==yesterdayStr()) S.streak=0;
     for(const k in S.daily) delete S.daily[k];
     S.date=t;
     S.sealed='';                               // 新的一日,香重新點起
@@ -736,6 +765,23 @@ function locked(){
   if(S.sealed===S.date){ toast('本日已封存,不可再改'); return true; }
   return false;
 }
+
+/* ═══════════════ 請示(道場版 confirm) ═══════════════ */
+let askResolve=null;
+function ask(body, yes, no){
+  document.getElementById('askBody').innerHTML=body;
+  document.getElementById('askYes').textContent=yes||'可';
+  document.getElementById('askNo').textContent=no||'止';
+  document.getElementById('askModal').classList.add('show');
+  return new Promise(r=>{ askResolve=r; });
+}
+function askEnd(v){
+  document.getElementById('askModal').classList.remove('show');
+  if(askResolve){ const r=askResolve; askResolve=null; r(v); }
+}
+document.getElementById('askYes').onclick=()=>askEnd(true);
+document.getElementById('askNo').onclick=()=>askEnd(false);
+document.getElementById('askModal').addEventListener('click',e=>{ if(e.target.id==='askModal') askEnd(false); });
 
 /* ═══════════════ 渲染 ═══════════════ */
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -759,6 +805,7 @@ function render(){
   const hdT=document.getElementById('hdToday');
   hdT.textContent = '日 課 '+cnNum(doneN)+' / '+cnNum(DAILY.length);
   hdT.classList.toggle('full', doneN===DAILY.length);
+  document.getElementById('hdExp').textContent = 'EXP ' + expNum(S.exp);
   document.getElementById('dailyN').textContent = cnNum(doneN)+' 印 / '+cnNum(DAILY.length);
 
   /* 一筆墨痕 */
@@ -843,6 +890,7 @@ function renderJoin(){
   document.getElementById('joinMeta').textContent = '連 '+cnNum(consec)+' 日 · 累 '+cnNum(S.checkinTotal)+' 回';
 }
 function doJoin(){
+  rollover();
   if(locked()) return;
   const t=todayStr(), y=yesterdayStr();
   if(S.checkinLast===t){ toast('本日已參,明日再來'); return; }
@@ -943,7 +991,7 @@ function toggle(id,state,defs,isDaily,el){
     S.lastPerfect=S.date;
     S.history[S.date]=true;
     checkAutoAch();
-    playAllSeal();
+    if(S.allSealDate!==S.date){ S.allSealDate=S.date; playAllSeal(); }
   } else if(was && isDaily && S.lastPerfect===S.date){
     S.streak=Math.max(0,S.streak-1);
     S.lastPerfect=''; delete S.history[S.date];
@@ -991,8 +1039,9 @@ function bindAch(){
       if(!locked()) confirmAch(a); } };
   });
 }
-function confirmAch(a){
-  if(!confirm('落下「'+ACHNAME[a.id]+'」之印?\n此印一落不可取回。')) return;
+async function confirmAch(a){
+  const ok = await ask('落下「'+ACHNAME[a.id]+'」之印?<span class="warn">此印一落,不可取回。</span>','落 印','作 罷');
+  if(!ok || locked()) return;
   S.ach[a.id]=true;
   sfxStamp(); buzz([18,40,18]);
   toast('印譜添一 · '+ACHNAME[a.id]);
@@ -1045,12 +1094,14 @@ document.getElementById('kakejiku').addEventListener('click',e=>{
   if(e.target.closest('.edit')) return;
   document.getElementById('kakeEdit').classList.toggle('show');
 });
-document.getElementById('kakeNext').onclick=()=>{ if(!S.quotes.length)return; S.quoteIdx=(S.quoteIdx+1)%S.quotes.length; scheduleSave(); renderKake(); };
+document.getElementById('kakeNext').onclick=()=>{ if(locked()||!S.quotes.length) return; S.quoteIdx=(S.quoteIdx+1)%S.quotes.length; scheduleSave(); renderKake(); };
 document.getElementById('kakeAdd').onclick=()=>{
+  if(locked()) return;
   document.getElementById('kakeAddRow').classList.toggle('show');
   document.getElementById('kakeInput').focus();
 };
 document.getElementById('kakeSave').onclick=()=>{
+  if(locked()) return;
   const inp=document.getElementById('kakeInput'); const v=inp.value.trim();
   if(!v){ toast('先寫一句再存'); return; }
   S.quotes.push(v); S.quoteIdx=S.quotes.length-1; inp.value='';
@@ -1059,24 +1110,27 @@ document.getElementById('kakeSave').onclick=()=>{
   scheduleSave(); renderKake();
 };
 document.getElementById('kakeInput').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('kakeSave').click(); });
-document.getElementById('kakeDel').onclick=()=>{
+document.getElementById('kakeDel').onclick=async ()=>{
+  if(locked()) return;
   if(!S.quotes.length) return;
-  if(!confirm('刪去此句?')) return;
+  if(!await ask('刪去此句?','刪 去','留 下')) return;
   S.quotes.splice(S.quoteIdx,1); if(S.quoteIdx>=S.quotes.length) S.quoteIdx=0;
   toast('已刪'); scheduleSave(); renderKake();
 };
 
 /* 自給率 */
 document.getElementById('ratePlus').onclick=()=>{
+  rollover();
   if(locked()) return;
   const old=S.rate; S.rate=Math.min(100,S.rate+5);
   if(S.rate>old && (S.rate===25||S.rate===50||S.rate===100)){ toast('里程已至 · '+({25:'廿五',50:'五十',100:'百'}[S.rate]||cnNum(S.rate))); sfxAllSeal(); buzz([25,40,25]); }
   checkAutoAch(); scheduleSave(); render();
 };
-document.getElementById('rateMinus').onclick=()=>{ if(locked()) return; S.rate=Math.max(0,S.rate-5); scheduleSave(); render(); };
+document.getElementById('rateMinus').onclick=()=>{ rollover(); if(locked()) return; S.rate=Math.max(0,S.rate-5); scheduleSave(); render(); };
 
 /* 鐘 */
 document.getElementById('bellBody').onclick=()=>{
+  rollover();
   if(locked()) return;
   const b=document.getElementById('bellBody');
   b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring');
@@ -1088,18 +1142,21 @@ document.getElementById('bellBody').onclick=()=>{
 };
 
 /* 積塵 */
-document.getElementById('dustPlus').onclick=()=>{ if(locked()) return; S.prep=Math.min(3,S.prep+1); if(S.prep>=3) buzz([40,60,40]); scheduleSave(); render(); };
+document.getElementById('dustPlus').onclick=()=>{ rollover(); if(locked()) return; S.prep=Math.min(3,S.prep+1); if(S.prep>=3) buzz([40,60,40]); scheduleSave(); render(); };
 document.getElementById('dustMinus').onclick=()=>{
+  rollover();
   if(locked()) return;
   if(S.prep>0){ S.prep-=1; if(S.prep===0){ toast('塵已拂去 · 你推出去了什麼?'); sfxStamp(); } }
   scheduleSave(); render();
 };
 
 /* 封存:不可逆 */
-document.getElementById('sealBtn').onclick=()=>{
+document.getElementById('sealBtn').onclick=async ()=>{
+  rollover();
   if(S.sealed===S.date) return;
   const n=DAILY.filter(q=>S.daily[q.id]).length;
-  if(!confirm('封存本日?\n今日 '+cnNum(n)+' 印。封存後當日紀錄轉為唯讀,不可再改。')) return;
+  const ok = await ask('封存本日?今日 '+cnNum(n)+' 印。<span class="warn">封存後當日紀錄轉為唯讀,不可再改。</span>','封 存','未 竟');
+  if(!ok || S.sealed===S.date) return;
   S.sealed=S.date;
   sfxSeal(); buzz([20,40,60]);
   toast('本日已封存');
@@ -1134,7 +1191,7 @@ document.getElementById('setSave').onclick=async ()=>{
   try{
     const remote=await apiGet();
     if(remote){
-      if(confirm('雲端已有存檔。要用雲端進度覆蓋目前畫面嗎?\n(取消 = 用目前畫面覆蓋雲端)')){
+      if(await ask('雲端已有存檔。<span class="warn">選「用雲端」會蓋掉目前畫面;選「用本機」會蓋掉雲端。</span>','用 雲 端','用 本 機')){
         S=migrate(remote);
         rollover();
       }
