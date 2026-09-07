@@ -1,7 +1,7 @@
 /* SEAN: Self-Funded — service worker
    只快取同源 App 殼(離線也能開)。
-   ⚠ 絕不攔截跨源請求 → GitHub Contents API、Google Fonts 都直接走網路,不影響同步。 */
-const CACHE = 'sean-rpg-v1';
+   ⚠ 絕不攔截跨源請求 → Google Fonts 直接走網路,不影響字型與同步。 */
+const CACHE = 'sean-rpg-v2-dojo';
 const ASSETS = [
   './', './index.html',
   './manifest.json',

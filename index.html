@@ -3,209 +3,282 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEAN: Self-Funded</title>
+<title>自給修行</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700;900&family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0C1210">
+<meta name="theme-color" content="#EFE9DC">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SELF-FUNDED">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="自給修行">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{
-  --bg:#0C1210; --panel:#131B18; --panel2:#182320; --line:#22302B;
-  --gold:#E8B44A; --gold-dim:#8A6C2E; --profit:#3DD68C; --loss:#E5534B;
-  --ink:#E9EFEC; --muted:#7E8F89;
-  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  --sans:'Noto Sans TC',-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+  --paper:#EFE9DC;        /* 和紙底 */
+  --paper2:#E7E0D0;       /* 紙的第二層:卡片、卷軸底 */
+  --ink:#26221C;          /* 墨 */
+  --ink-soft:#5C554A;     /* 淡墨 */
+  --faint:#6A6254;        /* 灰茶。規格原值 #8A8172 於和紙上只有 3.18:1,未過 WCAG AA;
+                             加深後 對紙 4.98:1、對紙二層 4.58:1(§7 驗收項) */
+  --line:rgba(38,34,28,.22);
+  --vermilion:#C33B2A;      /* 朱:僅限「完成/確認」 */
+  --vermilion-deep:#A52E20; /* 朱的深階:按壓態、警語,以及所有朱色小字(5.3:1 以上) */
+  --gold:#A08A4F;           /* 金:全系統僅一處 = 供電切換 */
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;min-height:100vh;
-  background-image:radial-gradient(ellipse 80% 40% at 50% -10%, rgba(232,180,74,.06), transparent);
-  padding-top:env(safe-area-inset-top);}
-.wrap{max-width:560px;margin:0 auto;padding:16px 14px 90px}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:'Zen Old Mincho','Noto Serif TC',serif;line-height:1.7;
+  background-image:
+    repeating-linear-gradient(90deg,rgba(38,34,28,.018) 0 1px,transparent 1px 88px),
+    radial-gradient(ellipse 120% 60% at 50% -20%,rgba(38,34,28,.04),transparent);
+  background-attachment:fixed;
+  min-height:100vh;padding-top:env(safe-area-inset-top);
+}
+button{font-family:inherit;color:inherit}
 
-/* header */
-.hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px}
-.hd h1{font-size:20px;font-weight:900;letter-spacing:.06em}
-.hd h1 span{color:var(--gold)}
-.hd .season{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;line-height:1.4}
-.ticker{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:12px;
-  border-bottom:1px solid var(--line);padding-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.ticker b{color:var(--gold)}
-.synbadge{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);white-space:nowrap;cursor:pointer}
-.synbadge.ok{color:var(--profit);border-color:rgba(61,214,140,.4)}
-.synbadge.local{color:var(--gold-dim);border-color:var(--gold-dim)}
-.synbadge.err{color:var(--loss);border-color:rgba(229,83,75,.5)}
-.synbadge.saving{color:var(--gold)}
+.wrap{max-width:560px;margin:0 auto;padding:26px 22px 90px}
 
-/* greeting */
-.greet{font-size:13px;color:var(--muted);margin-bottom:14px;padding:0 2px;min-height:18px}
-.greet b{color:var(--ink);font-weight:500}
+/* ── 頁首 ── */
+.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:16px}
+.hd .title{font-size:26px;font-weight:900;letter-spacing:.4em;writing-mode:vertical-rl;line-height:1.25;height:158px;flex:none}
+.hd .meta{text-align:left;min-width:0}
+.hd .meta .date{font-size:36px;font-weight:600;line-height:1.15;letter-spacing:.04em}
+.hd .meta .cap{font-size:11px;color:var(--faint);letter-spacing:.25em;margin-top:6px}
+.hd .meta .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.hd .meta .tag{font-size:11px;letter-spacing:.2em;color:var(--ink-soft);border:1px solid var(--line);padding:3px 10px}
+.hd .meta .tag.full{border-color:var(--vermilion-deep);color:var(--vermilion-deep)}
 
-/* EXP bar */
-.expcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;position:relative;overflow:hidden}
-.expcard.near::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 60% 100% at 50% 100%, rgba(232,180,74,.18), transparent);animation:pulse 2s ease-in-out infinite;pointer-events:none}
-@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
-.explabel{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-.explabel .t{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--muted)}
-.explabel .v{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--gold)}
-.explabel .v small{font-size:13px;color:var(--muted)}
-.barwrap{height:22px;background:#0A0F0D;border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden}
-.barfill{height:100%;background:linear-gradient(180deg,#F3C766,#C9932F);border-radius:5px 0 0 5px;transition:width .6s cubic-bezier(.2,.8,.2,1);min-width:2px}
-.barticks{position:absolute;inset:0;display:flex;pointer-events:none}
-.barticks i{flex:1;border-right:1px solid rgba(255,255,255,.05)}
-.barticks i:last-child{border:none}
-.expctl{display:flex;gap:8px;margin-top:10px;align-items:center}
-.expctl button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;font-family:var(--mono);font-size:14px;padding:6px 14px;cursor:pointer}
-.expctl button:active{background:var(--line)}
-.expctl .hint{font-size:11px;color:var(--muted);margin-left:auto;text-align:right}
-.milestone{font-family:var(--mono);font-size:10px;color:var(--gold-dim);margin-top:8px;letter-spacing:.05em}
+/* ── 自給率:一筆墨痕 ── */
+.rate{margin:20px 0 0;padding:20px 0 22px;border-top:1px solid var(--ink);border-bottom:1px dotted var(--line)}
+.rate .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.rate .big{font-size:46px;font-weight:600;letter-spacing:.02em}
+.rate .big small{font-size:18px;color:var(--faint);margin-left:2px}
+.rate .goal{font-size:11px;color:var(--faint);letter-spacing:.2em;text-align:right;line-height:1.9}
+.brush{margin-top:14px;height:14px;position:relative}
+.brush .track{position:absolute;inset:5px 0;background:rgba(38,34,28,.08);border-radius:7px}
+.brush .stroke{position:absolute;left:0;top:0;bottom:0;width:0;
+  background:linear-gradient(90deg,var(--ink) 0%,var(--ink) 82%,rgba(38,34,28,.55) 94%,rgba(38,34,28,.15) 100%);
+  border-radius:7px 3px 12px 7px;
+  clip-path:polygon(0 18%,97% 4%,100% 55%,98% 92%,1% 82%);
+  transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.brush .tip{position:absolute;left:0;top:50%;transform:translate(-4px,-50%);width:8px;height:8px;
+  background:var(--vermilion);border-radius:50%;transition:left .5s cubic-bezier(.2,.8,.2,1)}
+.brush .tip.near{animation:breathe 2s ease-in-out infinite}   /* 里程碑 ±5% 才呼吸 */
+.rate .marks{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:8px;letter-spacing:.1em}
+.rate .ctl{display:flex;align-items:center;gap:8px;margin-top:14px}
+.rate .ctl button{background:none;border:1px solid var(--line);padding:5px 12px;font-size:12px;letter-spacing:.2em;cursor:pointer}
+.rate .ctl button:active{background:rgba(38,34,28,.06)}
+.rate .ctl .ms{margin-left:auto;font-size:10px;color:var(--faint);letter-spacing:.15em;text-align:right}
 
-/* stats */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 8px;text-align:center}
-.stat .n{font-family:var(--mono);font-size:20px;font-weight:700}
-.stat .n.gold{color:var(--gold)} .stat .n.green{color:var(--profit)} .stat .n.red{color:var(--loss)}
-.stat .l{font-size:10px;color:var(--muted);letter-spacing:.1em;margin-top:2px}
+/* ── 今日公案 ── */
+.koan{margin:26px 0;text-align:center;padding:24px 12px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);position:relative}
+.koan .label{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--paper);padding:0 14px;font-size:10px;letter-spacing:.5em;color:var(--faint)}
+.koan .q{font-size:18px;font-weight:700;letter-spacing:.12em;line-height:2.1}
 
-/* streak chain */
-.chaincard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:18px}
-.chaintop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
-.chaintop .t{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--muted)}
-.chaintop .v{font-family:var(--mono);font-size:13px;color:var(--gold)}
-.chain{display:grid;grid-template-columns:repeat(15,1fr);gap:4px}
-.chain i{aspect-ratio:1;border-radius:4px;background:#0A0F0D;border:1px solid var(--line);display:grid;place-items:center;font-size:9px;transition:all .3s}
-.chain i.lit{background:linear-gradient(180deg,#F3C766,#C9932F);border-color:var(--gold);box-shadow:0 0 6px rgba(232,180,74,.4)}
-.chain i.today{border-color:var(--gold);border-width:2px;animation:pulse 1.6s ease-in-out infinite}
-.chain i.break{background:rgba(229,83,75,.15);border-color:rgba(229,83,75,.4)}
+/* ── 區塊 ── */
+.sec{margin:30px 0}
+.sec-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;gap:10px}
+.sec-hd h2{font-size:15px;font-weight:900;letter-spacing:.3em}
+.sec-hd .n{font-size:11px;color:var(--faint);letter-spacing:.15em;text-align:right}
 
-/* sections */
-section{margin-bottom:18px}
-.sh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding:0 2px}
-.sh h2{font-size:13px;font-weight:700;letter-spacing:.16em;color:var(--muted)}
-.sh .tag{font-family:var(--mono);font-size:11px;color:var(--gold-dim)}
+/* ── 落印(全系統核心互動) ── */
+.rows .row{display:flex;align-items:center;gap:16px;padding:14px 2px;border-bottom:1px dotted var(--line);cursor:pointer;user-select:none}
+.rows .row:active{background:rgba(38,34,28,.03)}
+.rows .row:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+.stamp{width:36px;height:36px;flex:none;border:1.5px solid rgba(195,59,42,.4);border-radius:6px;display:grid;place-items:center;
+  color:transparent;font-weight:900;font-size:16px;transform:rotate(-3deg);transition:border-color .2s;position:relative}
+.row.done .stamp{background:var(--vermilion);color:var(--paper);border-color:var(--vermilion);box-shadow:1px 2px 0 rgba(38,34,28,.18)}
+.row.done .stamp::after{content:"";position:absolute;inset:-3px;border:1px solid rgba(195,59,42,.25);border-radius:8px;transform:rotate(2deg)}
+.stamp.pressing{animation:press .32s cubic-bezier(.3,1.6,.5,1)}
+@keyframes press{0%{transform:rotate(-3deg) scale(1.5);opacity:.3}55%{transform:rotate(-3deg) scale(.92);opacity:1}100%{transform:rotate(-3deg) scale(1)}}
+.rows .name{flex:1;font-size:15px;letter-spacing:.05em;min-width:0}
+.rows .sub{font-size:11px;color:var(--faint);display:block;letter-spacing:.05em}
+.row.done .name{color:var(--faint)}
+.rows .val{font-size:13px;color:var(--faint);flex:none;letter-spacing:.1em}
+.row.done .val{color:var(--vermilion-deep)}
 
-/* quest */
-.quest{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.q{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;transition:background .15s}
-.q:last-child{border-bottom:none}
-.q:active{background:var(--panel2)}
-.q .box{width:24px;height:24px;flex:none;border:2px solid var(--muted);border-radius:6px;display:grid;place-items:center;font-size:15px;color:transparent;transition:all .2s}
-.q.done .box{background:var(--gold);border-color:var(--gold);color:#1A1206;transform:scale(1)}
-.q.pop .box{animation:pop .3s ease}
-@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
-.q .txt{flex:1;min-width:0}
-.q .txt .n{font-size:14px;font-weight:500}
-.q .txt .d{font-size:11px;color:var(--muted);margin-top:1px}
-.q.done .txt .n{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(232,180,74,.5)}
-.q .xp{font-family:var(--mono);font-size:11px;color:var(--gold-dim);flex:none}
-.q.done .xp{color:var(--gold)}
-.perfect{padding:10px 14px;text-align:center;font-size:12px;color:var(--profit);background:rgba(61,214,140,.06);display:none;letter-spacing:.1em}
-.perfect.show{display:block}
-.boss .q .box{border-radius:50%}
-.bossrow{background:linear-gradient(90deg, rgba(229,83,75,.08), transparent)}
-.bossrow .txt .n{color:#F0A9A4}
+/* ── 連印卷軸 ── */
+.scroll{margin:14px 0 0;padding:14px;border:1px solid var(--line);background:var(--paper2);overflow:hidden}
+.scroll .cap{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:var(--faint);letter-spacing:.25em;margin-bottom:10px}
+.seals{display:grid;grid-template-columns:repeat(15,1fr);gap:5px}
+.seals i{aspect-ratio:1;border:1px solid var(--line);border-radius:3px;display:grid;place-items:center;
+  font-size:10px;font-weight:900;color:transparent;transform:rotate(-2deg);font-style:normal}
+.seals i.on{background:var(--vermilion-deep);color:var(--paper);border-color:var(--vermilion-deep)}
+.seals i.today{border:1.5px solid var(--vermilion);animation:breathe 2s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.5}50%{opacity:1}}
 
-/* soul + quotes */
-.qt{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 14px;position:relative}
-.qt .mark{font-family:var(--mono);font-size:22px;color:var(--gold-dim);line-height:1}
-.qt .body{font-size:14px;line-height:1.7;margin:6px 0 12px;min-height:44px}
-.qt .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.qt .row button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;font-size:12px;padding:7px 12px;cursor:pointer;font-family:var(--sans)}
-.qt .row button:active{background:var(--line)}
-.qt .row .cnt{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto}
-.qtadd{display:none;margin-top:10px;gap:8px}
-.qtadd.show{display:flex}
-.qtadd input{flex:1;background:#0A0F0D;border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:13px;padding:9px 12px;font-family:var(--sans);min-width:0}
-.qtadd input:focus{outline:none;border-color:var(--gold-dim)}
-.qtadd button{background:var(--gold);border:none;color:#1A1206;font-weight:700;border-radius:8px;padding:0 16px;cursor:pointer;font-size:13px}
+/* ── 墨K線 ── */
+.inkchart{margin-top:14px;padding:16px 14px 10px;border:1px solid var(--line)}
+.inkchart .cap{font-size:10px;color:var(--faint);letter-spacing:.3em;margin-bottom:12px}
+.inkbars{display:flex;align-items:flex-end;gap:4px;height:56px}
+.inkbars i{flex:1;background:rgba(38,34,28,.15);border-radius:1px;min-height:2px}
+.inkbars i.up{background:var(--ink)}
+.inkbars i.top{background:var(--vermilion)}
+.inkchart .axis{display:flex;justify-content:space-between;font-size:9px;color:var(--faint);margin-top:8px;letter-spacing:.1em}
+.inkchart .axis span{flex:1;text-align:center}
 
-/* reconnect */
-.reconnect{background:var(--panel);border:1px solid rgba(229,83,75,.35);border-radius:12px;padding:14px;text-align:center}
-.reconnect p{font-size:12px;color:var(--muted);margin-bottom:10px}
-.recbtn{width:100%;padding:14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(180deg,#E5534B,#B23A34);color:#fff;font-size:15px;font-weight:700;font-family:var(--sans);letter-spacing:.2em}
-.recbtn:active{transform:scale(.98)}
-.recmsg{margin-top:10px;font-size:13px;color:var(--profit);display:none;line-height:1.6}
-.recmsg.show{display:block}
-.reccount{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:.08em}
+/* ── 日參(每日到訪) ── */
+.join{margin-top:14px;padding:14px;border:1px solid var(--line);background:var(--paper2)}
+.join .cap{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:var(--faint);letter-spacing:.25em;margin-bottom:10px}
+.join .cells{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}
+.join .cells i{aspect-ratio:.86;border:1px solid var(--line);border-radius:3px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;font-style:normal;transform:rotate(-2deg)}
+.join .cells i b{font-size:12px;font-weight:900;color:transparent;line-height:1}
+.join .cells i em{font-size:9px;font-style:normal;color:var(--faint);letter-spacing:.05em}
+.join .cells i.done{background:var(--vermilion-deep);border-color:var(--vermilion-deep)}
+.join .cells i.done b{color:var(--paper)}
+.join .cells i.done em{color:var(--paper)}
+.join .cells i.today{border:1.5px solid var(--vermilion)}
+.join .btn{width:100%;padding:11px;border:1.5px solid var(--vermilion);background:none;color:var(--vermilion-deep);
+  font-size:14px;font-weight:900;letter-spacing:.4em;cursor:pointer;text-indent:.4em}
+.join .btn:active{background:var(--vermilion);color:var(--paper)}
+.join .btn.done{border-color:var(--line);color:var(--faint);font-weight:400;letter-spacing:.3em;cursor:default}
 
-/* debuff */
-.debuff{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px}
-.debuff .info{flex:1}
-.debuff .n{font-size:13px;font-weight:700}
-.debuff .d{font-size:11px;color:var(--muted)}
-.stacks{display:flex;gap:5px;margin-top:6px}
-.stacks i{width:26px;height:8px;border-radius:3px;background:#0A0F0D;border:1px solid var(--line)}
-.stacks i.on{background:var(--loss);border-color:var(--loss)}
-.debuff .ctl{display:flex;flex-direction:column;gap:6px}
-.debuff .ctl button{width:34px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:16px;cursor:pointer}
-.dwarn{font-size:11px;color:var(--loss);margin-top:6px;display:none}
+/* ── 本章試煉 ── */
+.trial .row .stamp{border-radius:50%}
+.trial .boss{background:linear-gradient(90deg,rgba(195,59,42,.06),transparent)}
+.trial .boss .name{font-weight:900}
+
+/* ── 印譜 ── */
+.inpu{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.in-cell{aspect-ratio:1;border:1px solid var(--line);display:grid;place-items:center;text-align:center;
+  padding:8px;position:relative;cursor:pointer;user-select:none;overflow:hidden}
+.in-cell .seal{font-size:22px;font-weight:900;color:rgba(38,34,28,.15);transform:rotate(-4deg);line-height:1.2;letter-spacing:.05em}
+.in-cell.got .seal{color:var(--vermilion)}
+.in-cell.gold.got{border-color:rgba(160,138,79,.55)}
+.in-cell.gold.got .seal{color:var(--gold)}
+.in-cell .t{font-size:9px;color:var(--faint);position:absolute;bottom:6px;left:0;right:0;letter-spacing:.1em}
+.in-cell .hold{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--vermilion)}
+.in-cell.holding .hold{width:100%;transition:width .8s linear}
+.in-cell .seal.pressing{animation:press .32s cubic-bezier(.3,1.6,.5,1)}
+
+/* ── 鐘 ── */
+.bell{margin:30px 0;text-align:center;padding:24px 16px;border:1px solid var(--line);background:var(--paper2)}
+.bell .rope{width:2px;height:26px;background:var(--ink);margin:0 auto}
+.bell .body{width:56px;height:48px;margin:0 auto;background:var(--ink);border-radius:8px 8px 22px 22px;
+  position:relative;cursor:pointer;transform-origin:top center;border:none;padding:0}
+.bell .body::after{content:"";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:10px;height:10px;background:var(--ink);border-radius:50%}
+.bell .body.ring{animation:ring .7s ease-in-out}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(7deg)}45%{transform:rotate(-6deg)}70%{transform:rotate(3deg)}}
+.bell .cap{font-size:13px;margin-top:16px;color:var(--ink-soft);letter-spacing:.08em;line-height:1.9}
+.bell .cnt{font-size:10px;color:var(--faint);letter-spacing:.3em;margin-top:8px}
+.bell .msg{font-size:12px;color:var(--vermilion-deep);margin-top:10px;min-height:18px;letter-spacing:.05em}
+
+/* ── 積塵 ── */
+.dust{display:flex;align-items:center;gap:16px;padding:14px 2px;border-top:1px dotted var(--line);border-bottom:1px dotted var(--line)}
+.dust .t{flex:1;min-width:0}
+.dust .t .n{font-size:14px;font-weight:700;letter-spacing:.1em}
+.dust .t .d{font-size:11px;color:var(--faint)}
+.dust .bars{display:flex;gap:5px;margin-top:6px}
+.dust .bars i{width:30px;height:9px;border:1px solid var(--line);border-radius:2px}
+.dust .bars i.on{background:var(--ink-soft);border-color:var(--ink-soft)}
+.dust .ctl{display:flex;flex-direction:column;gap:6px;flex:none}
+.dust .ctl button{width:36px;height:28px;border:1px solid var(--line);background:none;font-size:13px;cursor:pointer;line-height:1}
+.dust .ctl button:active{background:rgba(38,34,28,.06)}
+.dwarn{font-size:11px;color:var(--vermilion-deep);margin-top:6px;display:none;letter-spacing:.05em}
 .dwarn.show{display:block}
 
-/* achievements */
-.ach{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.a{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .2s}
-.a .ico{font-size:18px;filter:grayscale(1);opacity:.35}
-.a .n{font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}
-.a .d{font-size:10px;color:var(--muted);opacity:.7;margin-top:1px}
-.a.unlocked{border-color:var(--gold-dim);background:linear-gradient(180deg, rgba(232,180,74,.07), var(--panel))}
-.a.unlocked .ico{filter:none;opacity:1}
-.a.unlocked .n{color:var(--gold)}
+/* ── 掛軸 ── */
+.kakejiku{margin:30px auto;max-width:330px;border:1px solid var(--line);border-top:6px solid var(--ink);border-bottom:6px solid var(--ink);
+  padding:26px 20px;text-align:center;background:var(--paper2);cursor:pointer}
+.kakejiku .txt{font-size:15px;font-weight:600;letter-spacing:.1em;line-height:2.2}
+.kakejiku .src{font-size:10px;color:var(--faint);margin-top:14px;letter-spacing:.3em}
+.kakejiku .edit{display:none;border-top:1px dotted var(--line);margin-top:16px;padding-top:14px;cursor:default}
+.kakejiku .edit.show{display:block}
+.kakejiku .edit .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.kakejiku .edit button{background:none;border:1px solid var(--line);font-size:11px;letter-spacing:.2em;padding:5px 12px;cursor:pointer}
+.kakejiku .edit button:active{background:rgba(38,34,28,.06)}
+.kakejiku .edit .addrow{display:none;gap:6px;margin-top:10px}
+.kakejiku .edit .addrow.show{display:flex}
+.kakejiku .edit input{flex:1;min-width:0;background:var(--paper);border:1px solid var(--line);padding:8px 10px;
+  font-family:inherit;font-size:13px;color:var(--ink)}
+.kakejiku .edit input:focus{outline:none;border-color:var(--ink)}
 
-/* settings link */
-.setrow{text-align:center;margin-top:8px}
-.setrow button{background:none;border:none;color:var(--muted);font-size:11px;font-family:var(--mono);cursor:pointer;text-decoration:underline;letter-spacing:.05em}
+/* ── 收盤儀式(封存) ── */
+.close{margin:30px 0 0;padding:22px 18px;border:1px solid var(--ink);text-align:center;position:relative}
+.close .label{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--paper);padding:0 14px;font-size:10px;letter-spacing:.5em;color:var(--faint)}
+.incense-wrap{display:flex;justify-content:center;align-items:flex-end;height:80px;margin:8px 0 14px}
+.incense{width:4px;height:70px;background:var(--ink);position:relative;border-radius:2px}
+.incense::before{content:"";position:absolute;top:-2px;left:-2px;width:8px;height:8px;
+  background:radial-gradient(circle,#E0642F,rgba(224,100,47,0) 70%);border-radius:50%;animation:ember 1.8s ease-in-out infinite}
+@keyframes ember{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+.close .d{font-size:13px;color:var(--ink-soft);line-height:2}
+.close .btn{margin-top:16px;display:inline-block;border:1.5px solid var(--vermilion);color:var(--vermilion-deep);
+  font-size:14px;font-weight:900;letter-spacing:.4em;padding:10px 26px 10px 30px;cursor:pointer;background:none;transition:none}
+.close .btn:active{background:var(--vermilion);color:var(--paper)}
+.close.sealed{border-style:double;border-width:3px}
+.close.sealed .incense::before{animation:none;opacity:.15}
 
-/* toast */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--panel2);border:1px solid var(--gold-dim);color:var(--ink);font-size:13px;padding:10px 18px;border-radius:99px;transition:all .35s cubic-bezier(.2,.8,.2,1);z-index:99;max-width:88vw;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.5)}
-#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+/* 封存後:當日紀錄唯讀 */
+body.sealed .rows .row,body.sealed .in-cell,body.sealed .bell .body,
+body.sealed .join .btn,body.sealed .rate .ctl button,body.sealed .dust .ctl button,
+body.sealed .kakejiku .edit button{cursor:default}
+body.sealed .rows .name,body.sealed .rows .sub,body.sealed .rows .val{color:var(--faint)}
+body.sealed .rows .row.done .stamp{background:var(--ink-soft);border-color:var(--ink-soft);box-shadow:none}
+body.sealed .rows .row.done .stamp::after{border-color:rgba(38,34,28,.18)}
+body.sealed .close .btn{display:none}
+.sealnote{display:none;font-size:11px;color:var(--faint);letter-spacing:.4em;margin-top:14px}
+body.sealed .sealnote{display:block}
 
-/* modal (loot + settings) */
-.modal{position:fixed;inset:0;background:rgba(6,9,8,.8);display:none;place-items:center;z-index:100;padding:20px;backdrop-filter:blur(3px)}
+/* ── 頁尾 + 同步印 ── */
+.foot{text-align:center;font-size:10px;color:var(--faint);letter-spacing:.3em;margin-top:34px;line-height:2.4}
+.foot .rule{width:40px;height:1px;background:var(--line);margin:0 auto 14px}
+.footmarks{display:flex;justify-content:center;gap:10px;margin-top:16px}
+.footmarks button{width:34px;height:34px;border:1px solid var(--line);background:none;font-size:13px;font-weight:900;
+  color:var(--faint);cursor:pointer;transform:rotate(-3deg);display:grid;place-items:center;padding:0}
+.footmarks button.ok{background:var(--ink-soft);border-color:var(--ink-soft);color:var(--paper)}
+.footmarks button.err{border:1.5px solid var(--vermilion);color:var(--vermilion-deep)}
+.footmarks button.saving{border-style:dashed}
+
+/* ── 皆印(完美的一天) ── */
+.allseal{position:fixed;inset:0;z-index:200;display:none;place-items:center;background:rgba(239,233,220,.92)}
+.allseal.show{display:grid}
+.allseal .flash{position:absolute;inset:0;background:var(--vermilion);opacity:0;animation:flash .4s ease-out}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+.allseal .big{position:relative;width:180px;height:180px;background:var(--vermilion);color:var(--paper);
+  display:grid;place-items:center;font-size:56px;font-weight:900;letter-spacing:.1em;line-height:1.05;
+  transform:rotate(-3deg);box-shadow:2px 3px 0 rgba(38,34,28,.2);animation:press .5s cubic-bezier(.3,1.6,.5,1)}
+.allseal .big::after{content:"";position:absolute;inset:-6px;border:2px solid rgba(195,59,42,.3);transform:rotate(2deg)}
+.allseal .skip{position:absolute;bottom:40px;font-size:10px;color:var(--faint);letter-spacing:.4em}
+
+/* ── 籤詩 ── */
+.omikuji-back{position:fixed;inset:0;z-index:210;display:none;justify-content:center;align-items:flex-start;background:rgba(38,34,28,.35)}
+.omikuji-back.show{display:flex}
+.omikuji{width:210px;background:var(--paper);border:1px solid var(--ink);border-top:none;padding:26px 18px 22px;text-align:center;
+  animation:draw .7s cubic-bezier(.2,.9,.25,1)}
+@keyframes draw{0%{transform:translateY(-100%)}100%{transform:translateY(0)}}
+.omikuji .grade{font-size:30px;font-weight:900;letter-spacing:.2em;color:var(--vermilion-deep);
+  border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px;text-indent:.2em}
+.omikuji .body{font-size:13px;line-height:2.1;letter-spacing:.05em;text-align:left;color:var(--ink)}
+.omikuji .take{margin-top:20px;width:100%;border:1px solid var(--ink);background:none;padding:9px;
+  font-size:13px;font-weight:700;letter-spacing:.5em;cursor:pointer;text-indent:.5em}
+.omikuji .take:active{background:var(--ink);color:var(--paper)}
+
+/* ── 奧(設定) ── */
+.modal{position:fixed;inset:0;background:rgba(38,34,28,.45);display:none;place-items:center;z-index:220;padding:20px}
 .modal.show{display:grid}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.card h3{font-size:15px;letter-spacing:.1em;margin-bottom:14px}
-.loot-ico{font-size:52px;margin:6px 0 12px;animation:drop .5s cubic-bezier(.2,1.4,.4,1)}
-@keyframes drop{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
-.loot-rare{font-family:var(--mono);font-size:11px;letter-spacing:.2em;margin-bottom:8px}
-.loot-rare.common{color:var(--muted)} .loot-rare.rare{color:var(--gold)} .loot-rare.legend{color:var(--profit)}
-.loot-body{font-size:14px;line-height:1.7;color:var(--ink);margin-bottom:18px}
-.card .close{background:var(--gold);border:none;color:#1A1206;font-weight:700;border-radius:10px;padding:11px 30px;cursor:pointer;font-size:14px;font-family:var(--sans)}
-.card .fld{text-align:left;margin-bottom:12px}
-.card .fld label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.05em}
-.card .fld input{width:100%;background:#0A0F0D;border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:13px;padding:9px 11px;font-family:var(--mono)}
-.card .fld input:focus{outline:none;border-color:var(--gold-dim)}
-.card .note{font-size:11px;color:var(--muted);line-height:1.6;text-align:left;margin-bottom:14px;background:#0A0F0D;border-radius:8px;padding:10px 12px}
-.card .btnrow{display:flex;gap:8px}
-.card .btnrow button{flex:1;border-radius:10px;padding:11px;cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:700}
-.card .btnrow .primary{background:var(--gold);border:none;color:#1A1206}
-.card .btnrow .ghost{background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
+.sheet{background:var(--paper);border:1px solid var(--ink);padding:24px 20px;max-width:380px;width:100%}
+.sheet h3{font-size:14px;font-weight:900;letter-spacing:.5em;text-align:center;margin-bottom:18px;text-indent:.5em}
+.sheet .note{font-size:11px;color:var(--ink-soft);line-height:2;background:var(--paper2);padding:12px 14px;margin-bottom:16px}
+.sheet .fld{margin-bottom:16px}
+.sheet .fld label{font-size:10px;color:var(--faint);display:block;margin-bottom:6px;letter-spacing:.3em}
+.sheet .fld input{width:100%;background:var(--paper2);border:1px solid var(--line);padding:10px 12px;font-family:inherit;font-size:14px;color:var(--ink)}
+.sheet .fld input:focus{outline:none;border-color:var(--ink)}
+.sheet .btnrow{display:flex;gap:8px}
+.sheet .btnrow button{flex:1;padding:11px;cursor:pointer;font-size:13px;letter-spacing:.25em;font-family:inherit}
+.sheet .btnrow .primary{background:var(--ink);border:1px solid var(--ink);color:var(--paper);font-weight:700}
+.sheet .btnrow .ghost{background:none;border:1px solid var(--line);color:var(--ink-soft)}
+.sheet .ver{font-size:10px;color:var(--faint);letter-spacing:.2em;text-align:center;margin-top:16px;line-height:2}
+.sheet .ver button{background:none;border:none;color:var(--faint);font-size:10px;letter-spacing:.2em;cursor:pointer;text-decoration:underline;font-family:inherit}
 
-.foot{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:22px;letter-spacing:.08em;line-height:1.8}
-/* hero quote(有感觸的話,置頂顯眼) */
-.qt.hero{margin-bottom:14px;background:linear-gradient(180deg, rgba(232,180,74,.07), var(--panel));border-color:var(--gold-dim)}
-.qt.hero .herolabel{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
-.qt.hero .mark{font-size:28px}
-.qt.hero .body{font-size:17px;font-weight:500;line-height:1.75;min-height:52px;color:#F3E6C8;margin:4px 0 12px}
-
-/* 每日簽到 */
-.checkin{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:14px}
-.checkin .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:8px}
-.checkin .top .t{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
-.checkin .top .m{font-family:var(--mono);font-size:10px;color:var(--gold-dim);white-space:nowrap}
-.checkin .cells{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:11px}
-.checkin .cells i{aspect-ratio:.7;border-radius:7px;background:#0A0F0D;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-style:normal;transition:all .3s}
-.checkin .cells i b{font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted)}
-.checkin .cells i span{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted)}
-.checkin .cells i.done{background:linear-gradient(180deg,#F3C766,#C9932F);border-color:var(--gold);box-shadow:0 0 6px rgba(232,180,74,.35)}
-.checkin .cells i.done b,.checkin .cells i.done span{color:#1A1206}
-.checkin .cells i.today{border-color:var(--gold);border-width:2px;animation:pulse 1.6s ease-in-out infinite}
-.checkin .cells i.today span{color:var(--gold)}
-.checkin .btn{width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(180deg,#F3C766,#C9932F);color:#1A1206;font-size:14px;font-weight:700;font-family:var(--sans);letter-spacing:.08em}
-.checkin .btn:active{transform:scale(.98)}
-.checkin .btn.done{background:var(--panel2);color:var(--muted);border:1px solid var(--line);cursor:default;letter-spacing:.1em}
+/* ── 提示 ── */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(70px);opacity:0;
+  background:var(--paper2);border:1px solid var(--ink);color:var(--ink);font-size:13px;padding:10px 18px;
+  transition:all .3s cubic-bezier(.2,.8,.2,1);z-index:230;max-width:86vw;text-align:center;letter-spacing:.05em}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -213,150 +286,183 @@ section{margin-bottom:18px}
 <body>
 <div class="wrap">
 
+  <!-- 頁首 -->
   <div class="hd">
-    <h1>SEAN<span>:</span>SELF-FUNDED</h1>
-    <div class="season">SEASON 2026-Q3<br>CH.1 策略成型</div>
-  </div>
-  <div class="ticker">
-    <span>SYSTEM v2.0 · <b>ROGUELITE</b></span>
-    <span class="synbadge local" id="synBadge">● LOCAL</span>
+    <div class="meta">
+      <div class="date" id="hdDate"></div>
+      <div class="cap" id="hdDay"></div>
+      <div class="tags">
+        <span class="tag">修 行 第 一 章 · 策 略 成 型</span>
+        <span class="tag" id="hdToday"></span>
+      </div>
+    </div>
+    <div class="title">自給修行</div>
   </div>
 
-  <div class="greet" id="greet"></div>
-
-  <div class="qt hero">
-    <div class="herolabel">🪞 有感觸的話 · 放最上面,每天提醒自己</div>
-    <div class="mark">❝</div>
-    <div class="body" id="qtBody"></div>
+  <!-- 自給率:一筆墨痕 -->
+  <div class="rate">
     <div class="row">
-      <button id="qtNext">下一句</button>
-      <button id="qtAddToggle">＋ 收藏這句</button>
-      <button id="qtDel" aria-label="刪除這句">刪除</button>
-      <div class="cnt" id="qtCnt"></div>
+      <div class="big"><span id="rateNum">0</span><small>%</small></div>
+      <div class="goal">生活費自給率<br><span id="rateNext"></span></div>
     </div>
-    <div class="qtadd" id="qtAddRow">
-      <input id="qtInput" type="text" maxlength="120" placeholder="貼上剛剛讓你有感觸的那句話…">
-      <button id="qtSave">存</button>
+    <div class="brush">
+      <div class="track"></div>
+      <div class="stroke" id="brushStroke"></div>
+      <div class="tip" id="brushTip"></div>
+    </div>
+    <div class="marks"><span>〇</span><span>廿五</span><span>五十</span><span>七五</span><span>百</span></div>
+    <div class="ctl">
+      <button id="rateMinus" aria-label="自給率減五">減 五</button>
+      <button id="ratePlus" aria-label="自給率加五">加 五</button>
+      <div class="ms" id="rateMs"></div>
     </div>
   </div>
 
-  <div class="expcard" id="expCard">
-    <div class="explabel">
-      <div class="t">LV · 生活費自給率</div>
-      <div class="v"><span id="selfRate">0</span><small> %</small></div>
-    </div>
-    <div class="barwrap">
-      <div class="barfill" id="barfill" style="width:0%"></div>
-      <div class="barticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    </div>
-    <div class="expctl">
-      <button id="rateMinus" aria-label="降低自給率">−</button>
-      <button id="ratePlus" aria-label="提高自給率">+</button>
-      <div class="hint">每次結算自己收入時更新<br>滿級 = 供電切換完成</div>
-    </div>
-    <div class="milestone" id="milestone"></div>
+  <!-- 今日公案 -->
+  <div class="koan">
+    <div class="label">今 日 公 案</div>
+    <div class="q" id="koanQ"></div>
   </div>
 
-  <div class="checkin" id="checkinCard">
-    <div class="top"><div class="t">🎁 每日簽到 · 只要出現就有獎</div><div class="m" id="checkinMeta"></div></div>
-    <div class="cells" id="checkinCells"></div>
-    <button class="btn" id="checkinBtn">每日簽到</button>
-  </div>
+  <!-- 日課 -->
+  <div class="sec">
+    <div class="sec-hd"><h2>日 課</h2><div class="n" id="dailyN"></div></div>
+    <div class="rows" id="dailyList"></div>
 
-  <div class="stats">
-    <div class="stat"><div class="n gold" id="totalExp">0</div><div class="l">總 EXP</div></div>
-    <div class="stat"><div class="n green" id="streak">0</div><div class="l">連勝天數 🔥</div></div>
-    <div class="stat"><div class="n red" id="recTotal">0</div><div class="l">拔線次數</div></div>
-  </div>
-
-  <div class="chaincard">
-    <div class="chaintop"><div class="t">🔥 連勝之鏈 · 近 30 天</div><div class="v" id="chainBest"></div></div>
-    <div class="chain" id="chain"></div>
-  </div>
-
-  <section>
-    <div class="sh"><h2>☀️ 每日任務</h2><div class="tag" id="todayTag"></div></div>
-    <div class="quest" id="dailyList"></div>
-    <div class="perfect quest" id="perfectMsg" style="margin-top:8px;border-radius:12px">★ 完美的一天 · 開箱 +1 ★</div>
-  </section>
-
-  <section>
-    <div class="sh"><h2>🔮 今日靈魂拷問</h2></div>
-    <div class="quest" style="padding:13px 14px;font-size:13px;color:var(--ink)" id="soulQ"></div>
-  </section>
-
-  <section>
-    <div class="sh"><h2>⚡ 斷線重連協議</h2></div>
-    <div class="reconnect">
-      <p>陷在短影音輪迴裡?別放下手機——先<b style="color:var(--ink)">站起來,喝一杯水</b>,然後按這顆:</p>
-      <button class="recbtn" id="recBtn">我 已 重 連</button>
-      <div class="recmsg" id="recMsg"></div>
-      <div class="reccount">斷線不算失敗,只是一次事件。爬出來的速度會越來越快。</div>
+    <!-- 連印卷軸 -->
+    <div class="scroll">
+      <div class="cap"><span>連 印 卷 軸</span><span id="chainBest"></span></div>
+      <div class="seals" id="chain"></div>
     </div>
-  </section>
 
-  <section>
-    <div class="sh"><h2>🌀 狀態異常</h2></div>
-    <div class="debuff">
-      <div class="info">
-        <div class="n">準備模式</div>
-        <div class="d">只優化、不推進的一天 = 疊 1 層</div>
-        <div class="stacks" id="prepStacks"><i></i><i></i><i></i></div>
-        <div class="dwarn" id="prepWarn">⚠ 疊滿 3 層!做任何一件「推出去」的事解除,再小都行。</div>
+    <!-- 墨K線 -->
+    <div class="inkchart">
+      <div class="cap">七 日 精 進 之 勢</div>
+      <div class="inkbars" id="inkbars"></div>
+      <div class="axis"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>今</span></div>
+    </div>
+
+    <!-- 日參 -->
+    <div class="join">
+      <div class="cap"><span>日 參</span><span id="joinMeta"></span></div>
+      <div class="cells" id="joinCells"></div>
+      <button class="btn" id="joinBtn"></button>
+    </div>
+  </div>
+
+  <!-- 週課 -->
+  <div class="sec">
+    <div class="sec-hd"><h2>週 課</h2><div class="n">週 一 寅 時 更 替</div></div>
+    <div class="rows" id="weeklyList"></div>
+  </div>
+
+  <!-- 本章試煉 -->
+  <div class="sec trial">
+    <div class="sec-hd"><h2>本 章 試 煉</h2><div class="n">策 略 成 型</div></div>
+    <div class="rows" id="mainList"></div>
+  </div>
+
+  <!-- 印譜 -->
+  <div class="sec">
+    <div class="sec-hd"><h2>印 譜</h2><div class="n">系 統 親 授,不 可 自 取</div></div>
+    <div class="inpu" id="achList"></div>
+  </div>
+
+  <!-- 鐘 -->
+  <div class="bell">
+    <div class="rope"></div>
+    <button class="body" id="bellBody" aria-label="敲鐘"></button>
+    <div class="cap">迷失於短影音之時——<br>起身,飲水一杯,而後敲鐘。</div>
+    <div class="msg" id="bellMsg"></div>
+    <div class="cnt" id="bellCnt"></div>
+  </div>
+
+  <!-- 積塵 -->
+  <div class="dust">
+    <div class="t">
+      <div class="n">積 塵</div>
+      <div class="d">只磨刀、不出鞘的一日,積塵一層</div>
+      <div class="bars" id="dustBars"><i></i><i></i><i></i></div>
+      <div class="dwarn" id="dustWarn">三層積塵。推出去任何一件事,再小都行——塵即散。</div>
+    </div>
+    <div class="ctl">
+      <button id="dustPlus" aria-label="積塵加一層">＋</button>
+      <button id="dustMinus" aria-label="拂去一層積塵">−</button>
+    </div>
+  </div>
+
+  <!-- 掛軸 -->
+  <div class="kakejiku" id="kakejiku">
+    <div class="txt" id="kakeTxt"></div>
+    <div class="src" id="kakeSrc"></div>
+    <div class="edit" id="kakeEdit">
+      <div class="btns">
+        <button id="kakeNext">下 一 句</button>
+        <button id="kakeAdd">收 藏</button>
+        <button id="kakeDel">刪 去</button>
       </div>
-      <div class="ctl">
-        <button id="prepPlus" aria-label="增加疊層">+</button>
-        <button id="prepMinus" aria-label="解除疊層">−</button>
+      <div class="addrow" id="kakeAddRow">
+        <input id="kakeInput" type="text" maxlength="120" placeholder="剛剛讓你有感觸的那句話">
+        <button id="kakeSave">存</button>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section>
-    <div class="sh"><h2>📅 週常任務</h2><div class="tag">週一 04:00 重置</div></div>
-    <div class="quest" id="weeklyList"></div>
-  </section>
+  <!-- 收盤儀式 -->
+  <div class="close" id="closeBox">
+    <div class="label">收 盤 儀 式</div>
+    <div class="incense-wrap"><div class="incense"></div></div>
+    <div class="d">點香一炷(廿五分)。香盡,落最後一印,<br>本日封存,不可再改。</div>
+    <button class="btn" id="sealBtn">封 存</button>
+    <div class="sealnote">本 日 已 封 存</div>
+  </div>
 
-  <section>
-    <div class="sh"><h2>🗡️ 主線 · 第一章「策略成型」</h2></div>
-    <div class="quest boss" id="mainList"></div>
-  </section>
+  <div class="foot">
+    <div class="rule"></div>
+    寅時換日 · 唯二死局:爆倉出局、於準備室中老去<br>其餘皆為掉血 — 血會回,情報永存
+    <div class="footmarks">
+      <button id="synMark" aria-label="同步狀態與設定">錄</button>
+      <button id="installBtn" style="display:none" aria-label="加入主畫面">置</button>
+    </div>
+  </div>
 
-  <section>
-    <div class="sh"><h2>🏆 成就</h2><div class="tag">點擊手動解鎖</div></div>
-    <div class="ach" id="achList"></div>
-  </section>
-
-  <div class="setrow" id="installRow" style="display:none"><button id="installBtn">📲 安裝到主畫面</button></div>
-  <div class="setrow"><button id="openSettings">⚙ 同步設定 / 儲存後端</button></div>
-
-  <div class="foot">每日 04:00 換日 · 週一 04:00 週常重置<br>唯二的 GAME OVER:爆倉出局 · 在準備室裡老死<br>其他一切都只是掉血。血會回,情報永久保留。</div>
 </div>
 
 <div id="toast"></div>
 
-<!-- 開箱 modal -->
-<div class="modal" id="lootModal">
-  <div class="card">
-    <h3>🎁 完美的一天 · 開箱</h3>
-    <div class="loot-ico" id="lootIco">🎁</div>
-    <div class="loot-rare" id="lootRare"></div>
-    <div class="loot-body" id="lootBody"></div>
-    <button class="close" id="lootClose">收下</button>
+<!-- 皆印 -->
+<div class="allseal" id="allSeal">
+  <div class="flash"></div>
+  <div class="big">皆印</div>
+  <div class="skip">觸 之 即 過</div>
+</div>
+
+<!-- 籤詩 -->
+<div class="omikuji-back" id="omikujiBack">
+  <div class="omikuji">
+    <div class="grade" id="omiGrade"></div>
+    <div class="body" id="omiBody"></div>
+    <button class="take" id="omiTake">收</button>
   </div>
 </div>
 
-<!-- 設定 modal -->
+<!-- 奧(設定) -->
 <div class="modal" id="setModal">
-  <div class="card">
-    <h3>⚙ 同步設定</h3>
-    <div class="note" id="setNote">
-      輸入通行碼後,進度會自動同步到你自己的 Cloudflare 後端(改動後 1~2 秒存一次)。<br>
-      <b>換裝置只要再輸入同一組通行碼</b>,不用再貼任何 API token。通行碼只存在這台裝置的瀏覽器。
+  <div class="sheet">
+    <h3>奧</h3>
+    <div class="note">
+      輸入通行碼後,進度自動同步到你自己的 Cloudflare 後端(改動後一兩秒存一次)。<br>
+      換裝置只要再輸入同一組通行碼,不用再貼任何 API token。通行碼只留在這台裝置。
     </div>
-    <div class="fld"><label>通行碼</label><input id="cfgKey" type="password" placeholder="你設定的那組通行碼" autocomplete="off"></div>
+    <div class="fld"><label>通 行 碼</label><input id="cfgKey" type="password" placeholder="你設定的那組通行碼" autocomplete="off"></div>
     <div class="btnrow">
-      <button class="ghost" id="setLocal">只用本機</button>
-      <button class="primary" id="setSave">連接並同步</button>
+      <button class="ghost" id="setLocal">僅 此 機</button>
+      <button class="primary" id="setSave">接 上 雲 端</button>
+    </div>
+    <div class="ver">
+      道場版 · 存檔 v3<br>
+      <span id="setState"></span><br>
+      <button id="setClose">閉</button>
     </div>
   </div>
 </div>
@@ -364,32 +470,34 @@ section{margin-bottom:18px}
 <script>
 /* ═══════════════ 資料定義 ═══════════════ */
 const DAILY = [
-  {id:'trade', n:'交易員的十分鐘', d:'策略日誌:進出、判斷、一句心情', xp:2},
-  {id:'iron',  n:'鐵與意志', d:'健身或伸展(保底成就感)', xp:1},
+  {id:'trade', n:'交易日誌', d:'進出、判斷、一句心情', xp:2},
+  {id:'iron',  n:'鐵與意志', d:'健身或伸展', xp:1},
   {id:'shot',  n:'收藏瞬間', d:'一張照片,或一句記錄', xp:1},
-  {id:'soul',  n:'靈魂拷問', d:'誠實回答上面那題', xp:1},
-  {id:'read',  n:'輸入端 · 讀書 15 分鐘', d:'INT 屬性維護', xp:1},
-  {id:'zen',   n:'核心校準 · 冥想 10 分鐘', d:'被動技能:加快斷線後的抽離速度', xp:1},
-  {id:'cat',   n:'擼貓充電', d:'跟隊友互動 · MP 回復', xp:1},
+  {id:'soul',  n:'公案作答', d:'誠實面對上面那題', xp:1},
+  {id:'read',  n:'讀書一刻', d:'十五分鐘', xp:1},
+  {id:'zen',   n:'靜坐', d:'十分鐘 · 斷線的預防針', xp:1},
+  {id:'cat',   n:'擼貓', d:'隊友互動 · 回氣', xp:1},
 ];
 const WEEKLY = [
-  {id:'w_data', n:'數據對照', d:'本週紀錄 vs 規則,寫三行結論', xp:5},
+  {id:'w_data',    n:'數據對照', d:'紀錄與規則,三行結論', xp:5},
   {id:'w_journal', n:'周記', d:'既有習慣,直接收編', xp:3},
-  {id:'w_link', n:'連結充電', d:'約飯 / 開黑多聊十分鐘 / 陪家人吃頓飯', xp:3},
+  {id:'w_link',    n:'連結充電', d:'約飯 · 開黑多聊十分 · 陪家人', xp:3},
 ];
 const MAIN = [
-  {id:'m_rule', n:'策略規則文件', d:'進出場、停損、倉位——寫到沒有一條靠盤感', xp:15},
-  {id:'m_track', n:'30 天紀錄', d:'模擬或小資金,每筆對照:照規則 or 憑感覺?', xp:15},
-  {id:'m_boss', n:'BOSS:規則審判', d:'月底統計守規率。誠實 = 通關,虧損照樣算贏', xp:30, boss:true},
+  {id:'m_rule',  n:'策略規則文書', d:'寫到無一條靠盤感', xp:15},
+  {id:'m_track', n:'三十日紀錄', d:'每筆對照:依規,或憑感', xp:15},
+  {id:'m_boss',  n:'規則審判', d:'守規率如實統計,虧損照樣算贏', xp:30, boss:true},
 ];
+/* 印譜:auto = 系統親授(條件到就落印);其餘需長按八百毫秒 + 確認,不可一鍵自取 */
 const ACH = [
-  {id:'a_face', ico:'🎯', n:'打臉紀念日', d:'第一次被市場證明規則有問題,且如實記錄'},
-  {id:'a_money', ico:'💴', n:'這是我的錢', d:'用自己賺的錢買一個純粹想要的東西'},
-  {id:'a_power', ico:'🔌', n:'供電切換', d:'第一個月不跟家裡拿生活費'},
-  {id:'a_infinite', ico:'♾️', n:'無限遊戲', d:'原型失敗後,兩週內開出下一個'},
-  {id:'a_unplug', ico:'🧷', n:'拔線者', d:'累計 10 次斷線重連(自動)', auto:true},
-  {id:'a_week', ico:'🔥', n:'七日連勝', d:'連續 7 天完美(自動)', auto:true},
+  {id:'a_unplug',   seal:'拔線<br>之人', t:'十次重連', auto:'recTotal'},
+  {id:'a_face',     seal:'打臉<br>紀念', t:'如實記錄'},
+  {id:'a_money',    seal:'吾之<br>錢也', t:'親手所掙'},
+  {id:'a_week',     seal:'七日<br>連印', t:'一週皆印', auto:'streak'},
+  {id:'a_infinite', seal:'無限<br>遊戲', t:'敗而再起'},
+  {id:'a_power',    seal:'供電<br>切換', t:'最高榮譽', auto:'rate', gold:true},
 ];
+const ACHNAME = {a_unplug:'拔線之人',a_face:'打臉紀念',a_money:'吾之錢也',a_week:'七日連印',a_infinite:'無限遊戲',a_power:'供電切換'};
 const SOULQ = [
   '此刻我在準備,還是在推進?',
   '今天有沒有一個瞬間,值得被記錄?',
@@ -410,48 +518,66 @@ const DEFAULT_QUOTES = [
   '錢是底片,人生是攝影。',
   '同樣是花掉時間:有朋友有盡頭的是消費,一個人無盡的是流失。',
 ];
-const RECMSGS = [
-  '已重連。剛剛那段,值得存檔嗎?不值得就翻頁。現在做一件最小的事:寫一句話,或十下伏地挺身。',
-  '已重連。今天沒有毀,今天還在。給自己拿一個 ✅:拍張照,或翻兩頁書。',
-  '已重連。掉進去不用變少,爬出來變快就是在升級。做一件 30 秒能完成的小事。',
+const BELLMSG = [
+  '已重連。剛才那段,不值得存檔——翻頁。',
+  '已重連。今日尚在。落一印,任何一印。',
+  '已重連。爬出得比上次快,便是精進。',
 ];
-const GREETS = [
-  '盤面之外,今天也把自己這局打好。',
-  '規則寫到沒有盤感的那天,你就升段了。',
-  '不用等準備好——先推出去一點點。',
-  '你的星期二正在靠近,每個勾都算數。',
-  '狀態爛也能產出,那才是真的強。',
-];
-/* 開箱獎池:common 70% / rare 25% / legend 5% */
-const LOOT = {
+/* 籤詩:小吉 70% / 吉 25% / 大吉 5% */
+const OMIKUJI = {
   common: [
-    {ico:'🪙', body:'+2 EXP 額外獎勵。穩穩的一天,穩穩地收下。'},
-    {ico:'☕', body:'+1 EXP。今天的咖啡格外值得,你配得上。'},
-    {ico:'📸', body:'+2 EXP。別忘了,你是用眼睛收藏世界的人。'},
-    {ico:'🎯', body:'+2 EXP。方向對著市場,繼續。'},
+    {body:'額外 貳 EXP。穩穩的一日,穩穩地收下。'},
+    {body:'額外 壹 EXP。今日的一杯格外值得,你配得上。'},
+    {body:'額外 貳 EXP。別忘了,你是用眼睛收藏世界的人。'},
+    {body:'額外 貳 EXP。方向對著市場,繼續。'},
   ],
   rare: [
-    {ico:'💎', body:'稀有!+5 EXP。連續的完美不是靠意志,是靠系統——你的系統在生效。'},
-    {ico:'🔥', body:'稀有!+5 EXP。GM 看見你了:今天你選了推進,不是準備。'},
-    {ico:'🃏', body:'稀有!隱藏挑戰:明天在別人開口找你之前,先主動聯繫一個朋友。完成 +8 EXP(自己記)。'},
+    {body:'額外 伍 EXP。連續的完美不靠意志,靠系統——你的系統在生效。'},
+    {body:'額外 伍 EXP。今日你選了推進,不是準備。此事有人看見。'},
+    {body:'隱藏試煉:明日在別人開口之前,先主動聯繫一個朋友。成則自記 捌 EXP。'},
   ],
   legend: [
-    {ico:'👑', body:'傳說!+15 EXP。你正在成為那個「花自己的錢也下得了手」的人。這一刻存檔。'},
-    {ico:'♾️', body:'傳說!GM 留言:你設計的不是一個 App,是一個願意每天回來面對自己的人。那個人比任何策略都值錢。'},
+    {body:'額外 十五 EXP。你正在成為那個「花自己的錢也下得了手」的人。此刻存檔。'},
+    {body:'你設計的不是一個面板,是一個願意每天回來面對自己的人。那個人比任何策略都值錢。'},
   ]
 };
+const OMIGRADE = {common:'小吉', rare:'吉', legend:'大吉'};
 
-/* ═══════════════ 儲存後端(可切換) ═══════════════ */
-/* backend: 'cloud' | 'local' | 'memory'
-   - cloud : 打自家 /api/save(Cloudflare Pages Functions + D1)
-             裝置端只存一組通行碼,GitHub token 不再出現在任何裝置上
-   - local : localStorage
-   - memory: 都不可用時的降級,僅存在記憶體 */
+/* ═══════════════ 漢數字 ═══════════════ */
+const CN    = ['〇','一','二','三','四','五','六','七','八','九'];
+const CN_UP = ['〇','壹','貳','參','肆','伍','陸','柒','捌','玖'];
+function cnNum(n){
+  if(!isFinite(n)) return '〇';
+  n = Math.round(n);
+  if(n < 0) return '負' + cnNum(-n);
+  if(n < 10) return CN[n];
+  if(n < 20) return '十' + (n % 10 ? CN[n % 10] : '');
+  if(n < 100){ const t = Math.floor(n / 10), o = n % 10; return CN[t] + '十' + (o ? CN[o] : ''); }
+  if(n < 1000){ const h = Math.floor(n / 100), r = n % 100;
+    return CN[h] + '百' + (r === 0 ? '' : (r < 10 ? '零' + CN[r] : cnNum(r))); }
+  if(n < 10000){ const k = Math.floor(n / 1000), r = n % 1000;
+    return CN[k] + '千' + (r === 0 ? '' : (r < 100 ? '零' + cnNum(r) : cnNum(r))); }
+  return String(n);
+}
+/* EXP:個位用大寫(壹貳參伍),十以上用常用漢數字(十五、三十) */
+function expNum(n){ return n < 10 ? CN_UP[Math.max(0, n)] : cnNum(n); }
+/* 日期:二十以上用廿、卅 */
+function dayNum(n){
+  if(n <= 10) return CN[n];
+  if(n < 20)  return '十' + CN[n % 10];
+  if(n === 20) return '二十';
+  if(n < 30)  return '廿' + CN[n % 10];
+  if(n === 30) return '三十';
+  return '卅' + CN[n % 10];
+}
+
+/* ═══════════════ 儲存後端(原架構保留,不動) ═══════════════ */
+/* backend: 'cloud' | 'local' | 'memory' */
 const LSKEY  = 'sean_rpg_v2';
 const CFGKEY = 'sean_rpg_cfcfg';
 const API    = '/api/save';
 let backend = 'memory';
-let cfKey = null;      // 通行碼,只存這台裝置
+let cfKey = null;
 let S = null;
 
 function loadCfg(){
@@ -467,7 +593,7 @@ async function apiGet(){
   if(r.status===401) throw new Error('unauthorized');
   if(!r.ok) throw new Error('GET '+r.status);
   const j = await r.json();
-  return j.save;                 // 還沒存過會是 null
+  return j.save;
 }
 async function apiPut(state){
   const r = await fetch(API, {
@@ -483,91 +609,104 @@ async function backendLoad(){
   loadCfg();
   if(cfKey){
     try{
-      setBadge('saving','● 連線中');
+      setMark('saving','連');
       const remote = await apiGet();
       backend = 'cloud';
-      setBadge('ok','● SYNCED');
+      setMark('ok','錄');
       return remote;
     }catch(e){
       backend = hasLS() ? 'local' : 'memory';
-      setBadge('err','● 同步失敗');
-      toast(e.message==='unauthorized' ? '通行碼不對,暫時使用本機。點右上徽章重設'
-                                       : '雲端連線失敗,暫時使用本機。點右上徽章可重設');
+      setMark('err','闕');
+      toast(e.message==='unauthorized' ? '通行碼不對,暫存此機。點頁尾印記重設'
+                                       : '雲端未通,暫存此機。點頁尾印記重設');
       if(backend==='local'){ try{ const raw=localStorage.getItem(LSKEY); return raw?JSON.parse(raw):null; }catch(_){}}
       return null;
     }
   }
-  // 沒設定通行碼 → 本機
-  if(hasLS()){ backend='local'; setBadge('local','● LOCAL'); try{ const raw=localStorage.getItem(LSKEY); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
-  backend='memory'; setBadge('err','● 無儲存'); return null;
+  if(hasLS()){ backend='local'; setMark('','此'); try{ const raw=localStorage.getItem(LSKEY); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+  backend='memory'; setMark('err','無'); return null;
 }
 
 let saveTimer=null, savingNow=false, pendingSave=false;
 function scheduleSave(){
   if(backend==='local'){ try{ localStorage.setItem(LSKEY, JSON.stringify(S)); }catch(e){} return; }
-  if(backend!=='cloud') return;       // memory: 不存
-  // 雲端:改動後延遲 1.5 秒自動存(debounce)。D1 寫入很便宜,不必像 GitHub commit 等 3 秒
+  if(backend!=='cloud') return;
   clearTimeout(saveTimer);
-  setBadge('saving','● 待存…');
+  setMark('saving','待');
   saveTimer = setTimeout(runCloudSave, 1500);
 }
 async function runCloudSave(){
   if(savingNow){ pendingSave=true; return; }
   savingNow=true;
   try{
-    setBadge('saving','● 儲存中');
+    setMark('saving','存');
     await apiPut(S);
-    setBadge('ok','● SYNCED');
+    setMark('ok','錄');
   }catch(e){
-    setBadge('err','● 存檔失敗');
-    // 同時寫一份本機當保險
+    setMark('err','闕');
     if(hasLS()){ try{ localStorage.setItem(LSKEY, JSON.stringify(S)); }catch(_){}}
   }
   savingNow=false;
   if(pendingSave){ pendingSave=false; runCloudSave(); }
 }
-function setBadge(cls,txt){
-  const b=document.getElementById('synBadge');
+function setMark(cls,txt){
+  const b=document.getElementById('synMark');
   if(!b) return;
-  b.className='synbadge '+cls; b.textContent=txt;
+  b.className = cls; b.textContent = txt;
+  const st=document.getElementById('setState');
+  if(st) st.textContent = backend==='cloud'?'雲端同步中':backend==='local'?'僅存此機':'無可用儲存';
 }
 
-/* ═══════════════ 遊戲日曆(04:00 換日) ═══════════════ */
+/* ═══════════════ 寅時換日(04:00) ═══════════════ */
 function gameNow(){ const d=new Date(); d.setHours(d.getHours()-4); return d; }
-function todayStr(){ const d=gameNow(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function yesterdayStr(){ const d=gameNow(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function keyOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayStr(){ return keyOf(gameNow()); }
+function yesterdayStr(){ const d=gameNow(); d.setDate(d.getDate()-1); return keyOf(d); }
 function weekStr(){ const d=gameNow(); const day=(d.getDay()+6)%7; const mon=new Date(d); mon.setDate(d.getDate()-day); return mon.getFullYear()+'-W'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0'); }
+function monthStr(){ const d=gameNow(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function parseKey(k){ const p=k.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
 
 function freshState(){
   return {
-    v:2, rate:0, exp:0, streak:0, bestStreak:0, recTotal:0, prep:0,
+    v:3, rate:0, exp:0, streak:0, bestStreak:0, recTotal:0, prep:0,
     checkinLast:'', checkinStreak:0, checkinTotal:0,
     date: todayStr(), week: weekStr(),
     daily:{}, weekly:{}, main:{}, ach:{},
     soulIdx: Math.floor(Math.random()*SOULQ.length),
-    greetIdx: Math.floor(Math.random()*GREETS.length),
     lastPerfect:'',
-    history:{},               // { 'YYYY-MM-DD': true } 完美日紀錄,供火焰鏈用
+    history:{},          // {'YYYY-MM-DD': true} 皆印之日 → 連印卷軸
+    marks:{},            // {'YYYY-MM-DD': n}    當日落印數 → 墨K線
+    bells:{},            // {'YYYY-MM': n}       月鐘響
+    sealed:'',           // 已封存的日期
+    since:'',            // 修行第一日
     quotes: DEFAULT_QUOTES.slice(), quoteIdx: 0
   };
 }
 function migrate(s){
   const f = freshState();
-  // 補齊舊存檔缺的欄位
   for(const k in f){ if(!(k in s)) s[k]=f[k]; }
   if(!s.quotes || !s.quotes.length){ s.quotes=DEFAULT_QUOTES.slice(); s.quoteIdx=0; }
   if(!s.history) s.history={};
+  if(!s.marks)   s.marks={};
+  if(!s.bells)   s.bells={};
+  if(typeof s.sealed!=='string') s.sealed='';
+  if(!s.since){                       // 舊存檔:從最早的紀錄回推起始日
+    const keys=Object.keys(s.history).concat(Object.keys(s.marks)).sort();
+    s.since = keys.length ? keys[0] : (s.date || todayStr());
+  }
+  delete s.greetIdx;                  // 舊版問候語欄位,道場版不再使用
+  s.v = 3;
   return s;
 }
 
 async function init(){
   const remote = await backendLoad();
   S = remote ? migrate(remote) : freshState();
+  if(!S.since) S.since = S.date || todayStr();
   rollover();
   render();
-  // 首次且沒設定過後端 → 提示可連 GitHub(不強迫)
   if(backend!=='cloud' && !localStorage.getItem('sean_rpg_hint')){
-    setTimeout(()=>toast('想跨裝置同步?點右上「● LOCAL」輸入通行碼'),1200);
+    setTimeout(()=>toast('想跨裝置同步?點頁尾印記輸入通行碼'),1200);
     try{ localStorage.setItem('sean_rpg_hint','1'); }catch(e){}
   }
 }
@@ -577,12 +716,13 @@ function rollover(){
   if(S.date!==t){
     const allDone = DAILY.every(q=>S.daily[q.id]);
     if(allDone){ S.streak+=1; S.history[S.date]=true; }
-    else { S.streak=0; }
+    else { S.streak=0; }                       // 休關一日:不歸咎、不標紅
     if(S.streak>S.bestStreak) S.bestStreak=S.streak;
-    for(const k in S.daily) delete S.daily[k];   // 原地清空:toggle() 手上的 state 參照才不會變成孤兒
+    S.marks[S.date]=DAILY.filter(q=>S.daily[q.id]).length;
+    for(const k in S.daily) delete S.daily[k];
     S.date=t;
+    S.sealed='';                               // 新的一日,香重新點起
     S.soulIdx=Math.floor(Math.random()*SOULQ.length);
-    S.greetIdx=Math.floor(Math.random()*GREETS.length);
     if(S.quotes.length) S.quoteIdx=(S.quoteIdx+1)%S.quotes.length;
     S.lastPerfect='';
     checkAutoAch();
@@ -590,299 +730,456 @@ function rollover(){
   if(S.week!==w){ for(const k in S.weekly) delete S.weekly[k]; S.week=w; }
 }
 
+/* 封存 = 真唯讀。任何會改動當日紀錄的動作都要先過這一關 */
+function locked(){
+  if(S.sealed===S.date){ toast('本日已封存,不可再改'); return true; }
+  return false;
+}
+
 /* ═══════════════ 渲染 ═══════════════ */
-function questRow(q,state){
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function questRow(q,state,stampChar){
   const done=state[q.id];
-  return `<div class="q ${done?'done':''} ${q.boss?'bossrow':''}" data-id="${q.id}" role="checkbox" aria-checked="${!!done}" tabindex="0">
-    <div class="box">✓</div>
-    <div class="txt"><div class="n">${q.n}</div><div class="d">${q.d}</div></div>
-    <div class="xp">+${q.xp} EXP</div></div>`;
+  return '<div class="row '+(done?'done ':'')+(q.boss?'boss':'')+'" data-id="'+q.id+'" role="checkbox" aria-checked="'+(!!done)+'" tabindex="0">'
+    + '<div class="stamp">'+(q.boss?'關':stampChar)+'</div>'
+    + '<div class="name">'+esc(q.n)+'<span class="sub">'+esc(q.d)+'</span></div>'
+    + '<div class="val">'+expNum(q.xp)+'</div></div>';
 }
+
 function render(){
-  document.getElementById('greet').innerHTML = '<b>「'+GREETS[S.greetIdx]+'」</b>';
-  document.getElementById('selfRate').textContent=S.rate;
-  document.getElementById('barfill').style.width=S.rate+'%';
-  // 接近里程碑發光
-  const near = (S.rate>=15&&S.rate<25)||(S.rate>=40&&S.rate<50)||(S.rate>=90&&S.rate<100);
-  document.getElementById('expCard').classList.toggle('near', near);
-  const ms=document.getElementById('milestone');
-  ms.textContent = S.rate>=100?'★ 滿級 · 供電切換完成 · 你自由了':
-    S.rate>=50?'下一里程碑:100% 供電切換':
-    S.rate>=25?'下一里程碑:50% 半自給':'下一里程碑:25%(第三章解鎖)';
-  document.getElementById('totalExp').textContent=S.exp;
-  document.getElementById('streak').textContent=S.streak;
-  document.getElementById('recTotal').textContent=S.recTotal;
-  document.getElementById('todayTag').textContent=S.date;
-  document.getElementById('soulQ').textContent='「'+SOULQ[S.soulIdx]+'」';
-  if(S.quoteIdx>=S.quotes.length) S.quoteIdx=0;
-  document.getElementById('qtBody').textContent = S.quotes.length?S.quotes[S.quoteIdx]:'語錄庫是空的——去 reels 抓一句回來。';
-  document.getElementById('qtCnt').textContent = S.quotes.length?(S.quoteIdx+1)+' / '+S.quotes.length:'0 / 0';
+  const d = gameNow();
+  document.getElementById('hdDate').textContent = cnNum(d.getMonth()+1)+'月'+dayNum(d.getDate())+'日';
+  const since = S.since || S.date || todayStr();
+  const day = Math.floor((parseKey(S.date) - parseKey(since))/86400000) + 1;
+  document.getElementById('hdDay').textContent = '修 行 第 '+cnNum(Math.max(1,day))+' 日';
 
-  document.getElementById('dailyList').innerHTML=DAILY.map(q=>questRow(q,S.daily)).join('');
-  document.getElementById('weeklyList').innerHTML=WEEKLY.map(q=>questRow(q,S.weekly)).join('');
-  document.getElementById('mainList').innerHTML=MAIN.map(q=>questRow(q,S.main)).join('');
-  document.getElementById('perfectMsg').classList.toggle('show', DAILY.every(q=>S.daily[q.id]));
+  const doneN = DAILY.filter(q=>S.daily[q.id]).length;
+  const hdT=document.getElementById('hdToday');
+  hdT.textContent = '日 課 '+cnNum(doneN)+' / '+cnNum(DAILY.length);
+  hdT.classList.toggle('full', doneN===DAILY.length);
+  document.getElementById('dailyN').textContent = cnNum(doneN)+' 印 / '+cnNum(DAILY.length);
 
-  renderChain();
-  renderCheckin();
+  /* 一筆墨痕 */
+  document.getElementById('rateNum').textContent = S.rate;
+  document.getElementById('brushStroke').style.width = S.rate+'%';
+  document.getElementById('brushTip').style.left = S.rate+'%';
+  const MARK={25:'廿五',50:'五十',75:'七五',100:'百'};
+  const next = S.rate>=100?null : S.rate>=75?100 : S.rate>=50?75 : S.rate>=25?50 : 25;
+  document.getElementById('rateNext').textContent = next?('次の關:'+MARK[next]):'關 · 已 破';
+  document.getElementById('brushTip').classList.toggle('near', !!next && (next-S.rate)<=5);
+  document.getElementById('rateMs').textContent = S.rate>=100?'滿 · 供電切換已成':
+    S.rate>=50?'次一里程:百 · 供電切換':S.rate>=25?'次一里程:五十 · 半自給':'次一里程:廿五';
 
-  const st=document.getElementById('prepStacks').children;
-  for(let i=0;i<3;i++) st[i].classList.toggle('on', i<S.prep);
-  document.getElementById('prepWarn').classList.toggle('show', S.prep>=3);
+  document.getElementById('koanQ').textContent = '「'+SOULQ[S.soulIdx % SOULQ.length]+'」';
 
-  document.getElementById('achList').innerHTML=ACH.map(a=>`
-    <div class="a ${S.ach[a.id]?'unlocked':''}" data-ach="${a.id}" role="button" tabindex="0">
-      <div class="ico">${a.ico}</div><div class="n">${a.n}</div><div class="d">${a.d}</div></div>`).join('');
+  document.getElementById('dailyList').innerHTML  = DAILY.map(q=>questRow(q,S.daily,'印')).join('');
+  document.getElementById('weeklyList').innerHTML = WEEKLY.map(q=>questRow(q,S.weekly,'週')).join('');
+  document.getElementById('mainList').innerHTML   = MAIN.map(q=>questRow(q,S.main,'試')).join('');
 
-  bindQuests();
+  renderChain(); renderInkChart(); renderJoin(); renderAch(); renderKake();
+
+  const bars=document.getElementById('dustBars').children;
+  for(let i=0;i<3;i++) bars[i].classList.toggle('on', i<S.prep);
+  document.getElementById('dustWarn').classList.toggle('show', S.prep>=3);
+
+  document.getElementById('bellCnt').textContent = '本 月 鐘 響 · '+cnNum(S.bells[monthStr()]||0)+' 回';
+
+  document.body.classList.toggle('sealed', S.sealed===S.date);
+  document.getElementById('closeBox').classList.toggle('sealed', S.sealed===S.date);
+
+  bindRows();
 }
+
 function renderChain(){
-  const box=document.getElementById('chain'); box.innerHTML='';
-  const today=todayStr(); const allDoneToday=DAILY.every(q=>S.daily[q.id]);
-  const cells=[];
+  const box=document.getElementById('chain');
+  const today=todayStr(), allDoneToday=DAILY.every(q=>S.daily[q.id]);
+  let html='';
   for(let i=29;i>=0;i--){
     const d=gameNow(); d.setDate(d.getDate()-i);
-    const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const key=keyOf(d);
     let cls='';
-    if(key===today){ cls = allDoneToday?'lit today':'today'; }
-    else if(S.history[key]) cls='lit';
-    cells.push(`<i class="${cls}">${S.history[key]||(key===today&&allDoneToday)?'🔥':''}</i>`);
+    if(key===today) cls = allDoneToday ? 'on today' : 'today';
+    else if(S.history[key]) cls='on';
+    html += '<i class="'+cls+'">印</i>';
   }
-  box.innerHTML=cells.join('');
-  document.getElementById('chainBest').textContent='最長 '+S.bestStreak+' 天';
+  box.innerHTML=html;
+  document.getElementById('chainBest').textContent='最 長 '+cnNum(S.bestStreak)+' 日';
 }
 
-/* ── 每日簽到:7 天循環,獎勵遞增,只要「出現」就有 ── */
-const CHECKIN_CYCLE=[1,1,2,3,3,5,8];
-function renderCheckin(){
+function renderInkChart(){
+  const box=document.getElementById('inkbars');
+  const today=todayStr(); const total=DAILY.length;
+  let html='';
+  for(let i=6;i>=0;i--){
+    const d=gameNow(); d.setDate(d.getDate()-i);
+    const key=keyOf(d);
+    const n = key===today ? DAILY.filter(q=>S.daily[q.id]).length : (S.marks[key]||0);
+    const h = Math.max(4, Math.round(n/total*100));
+    const cls = key===today ? 'top' : (n>=total ? 'up' : '');
+    html += '<i class="'+cls+'" style="height:'+h+'%"></i>';
+  }
+  box.innerHTML=html;
+}
+
+/* ── 日參:七日一輪,只要「來過」就落一印 ── */
+const JOIN_CYCLE=[1,1,2,3,3,5,8];
+function renderJoin(){
   const t=todayStr(), y=yesterdayStr();
-  const claimed=S.checkinLast===t;
-  const displayStreak = claimed ? S.checkinStreak : (S.checkinLast===y ? S.checkinStreak+1 : 1);
-  const pos=((displayStreak-1)%7+7)%7;
+  const claimed = S.checkinLast===t;
+  const shown = claimed ? S.checkinStreak : (S.checkinLast===y ? S.checkinStreak+1 : 1);
+  const pos = ((shown-1)%7+7)%7;
   let html='';
   for(let i=0;i<7;i++){
     const cls = i<pos ? 'done' : (i===pos ? (claimed?'done':'today') : '');
-    html+=`<i class="${cls}"><b>D${i+1}</b><span>+${CHECKIN_CYCLE[i]}</span></i>`;
+    html += '<i class="'+cls+'"><b>印</b><em>'+expNum(JOIN_CYCLE[i])+'</em></i>';
   }
-  document.getElementById('checkinCells').innerHTML=html;
-  const btn=document.getElementById('checkinBtn');
-  if(claimed){ btn.textContent='今天已簽到 ✓'; btn.classList.add('done'); }
-  else { btn.textContent='每日簽到  +'+CHECKIN_CYCLE[pos]+' EXP'; btn.classList.remove('done'); }
+  document.getElementById('joinCells').innerHTML=html;
+  const btn=document.getElementById('joinBtn');
+  if(claimed){ btn.textContent='本 日 已 參'; btn.classList.add('done'); }
+  else { btn.textContent='參 道 · '+expNum(JOIN_CYCLE[pos]); btn.classList.remove('done'); }
   const consec = claimed ? S.checkinStreak : (S.checkinLast===y ? S.checkinStreak : 0);
-  document.getElementById('checkinMeta').textContent='連續 '+consec+' 天 · 累計 '+S.checkinTotal+' 次';
+  document.getElementById('joinMeta').textContent = '連 '+cnNum(consec)+' 日 · 累 '+cnNum(S.checkinTotal)+' 回';
 }
-function doCheckin(){
+function doJoin(){
+  if(locked()) return;
   const t=todayStr(), y=yesterdayStr();
-  if(S.checkinLast===t){ toast('今天已經簽到過囉,明天再來 ✓'); return; }
+  if(S.checkinLast===t){ toast('本日已參,明日再來'); return; }
   S.checkinStreak = (S.checkinLast===y) ? S.checkinStreak+1 : 1;
   S.checkinLast=t; S.checkinTotal+=1;
   const pos=((S.checkinStreak-1)%7+7)%7;
-  const reward=CHECKIN_CYCLE[pos];
+  const reward=JOIN_CYCLE[pos];
   S.exp+=reward;
-  if(pos===6){ toast('🎉 七日簽到滿一輪!+'+reward+' EXP · 你就是那個「有出現」的人'); sfxLoot('legend'); }
-  else if(reward>=3){ toast('✅ 簽到 +'+reward+' EXP · 連續 '+S.checkinStreak+' 天,火有在燒'); sfxLoot('rare'); }
-  else { toast('✅ 簽到 +'+reward+' EXP · 連續 '+S.checkinStreak+' 天'); sfxCheck(); }
-  buzz(20);
+  sfxStamp(); buzz(18);
+  toast(pos===6 ? ('七日參道圓滿 · '+expNum(reward)+' EXP') : ('已參 · '+expNum(reward)+' EXP · 連 '+cnNum(S.checkinStreak)+' 日'));
   scheduleSave(); render();
 }
 
-/* ═══════════════ 互動 ═══════════════ */
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600);}
-function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+function renderAch(){
+  document.getElementById('achList').innerHTML = ACH.map(a=>
+    '<div class="in-cell '+(S.ach[a.id]?'got ':'')+(a.gold?'gold':'')+'" data-ach="'+a.id+'" role="button" tabindex="0">'
+    + '<div class="seal">'+a.seal+'</div><div class="t">'+a.t+'</div><div class="hold"></div></div>').join('');
+}
 
-/* 打勾音效:WebAudio 合成,不需外部檔案 */
+function renderKake(){
+  if(S.quoteIdx>=S.quotes.length) S.quoteIdx=0;
+  document.getElementById('kakeTxt').textContent = S.quotes.length ? S.quotes[S.quoteIdx] : '掛軸尚空——去取一句回來。';
+  document.getElementById('kakeSrc').textContent = S.quotes.length
+    ? ('語 錄 · '+cnNum(S.quotes.length)+' 之 '+cnNum(S.quoteIdx+1)) : '語 錄 · 〇';
+}
+
+/* ═══════════════ 聲 · 觸 ═══════════════ */
 let AC=null;
-function beep(freq,dur,type){
+function ac(){
   try{
     AC = AC || new (window.AudioContext||window.webkitAudioContext)();
     if(AC.state==='suspended') AC.resume();
-    const o=AC.createOscillator(), g=AC.createGain();
-    o.type=type||'sine'; o.frequency.value=freq;
-    o.connect(g); g.connect(AC.destination);
-    g.gain.setValueAtTime(0.0001,AC.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.14,AC.currentTime+0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+dur);
-    o.start(); o.stop(AC.currentTime+dur);
+    return AC;
+  }catch(e){ return null; }
+}
+/* 物的聲音:低頻、短、不清脆 */
+function tone(freq, dur, peak, type){
+  const c=ac(); if(!c) return;
+  try{
+    const o=c.createOscillator(), g=c.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(freq,c.currentTime);
+    o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(0.0001,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(peak,c.currentTime+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);
+    o.start(); o.stop(c.currentTime+dur+0.02);
   }catch(e){}
 }
-function sfxCheck(){ beep(880,0.09,'triangle'); buzz(15); }
-function sfxPerfect(){ beep(660,0.1,'sine'); setTimeout(()=>beep(990,0.14,'sine'),90); buzz([20,40,30]); }
-function sfxLoot(rare){ if(rare==='legend'){ beep(523,0.12); setTimeout(()=>beep(659,0.12),110); setTimeout(()=>beep(784,0.2),220); buzz([30,50,30,50,60]); } else if(rare==='rare'){ beep(587,0.12); setTimeout(()=>beep(880,0.18),120); buzz([20,40,40]); } else { beep(700,0.1); buzz(20); } }
+function noise(dur, peak, hp){
+  const c=ac(); if(!c) return;
+  try{
+    const len=Math.floor(c.sampleRate*dur);
+    const buf=c.createBuffer(1,len,c.sampleRate), ch=buf.getChannelData(0);
+    for(let i=0;i<len;i++) ch[i]=(Math.random()*2-1)*(1-i/len);
+    const src=c.createBufferSource(); src.buffer=buf;
+    const f=c.createBiquadFilter(); f.type='highpass'; f.frequency.value=hp||1800;
+    const g=c.createGain(); g.gain.value=peak;
+    src.connect(f); f.connect(g); g.connect(c.destination);
+    src.start();
+  }catch(e){}
+}
+function sfxStamp(){  tone(120,0.09,0.09,'sine'); noise(0.03,0.02,900); }        /* 落印 */
+function sfxAllSeal(){ tone(88,0.6,0.13,'sine'); tone(176,0.35,0.05,'sine'); }   /* 皆印 */
+function sfxBell(){   tone(180,1.2,0.10,'sine'); tone(486,0.8,0.035,'sine'); }   /* 鐘 */
+function sfxSeal(){   noise(0.22,0.05,1200); }                                    /* 封存:紙刷 */
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
 
-function bindQuests(){
-  document.querySelectorAll('#dailyList .q').forEach(el=>el.onclick=()=>toggle(el.dataset.id,S.daily,DAILY,true,el));
-  document.querySelectorAll('#weeklyList .q').forEach(el=>el.onclick=()=>toggle(el.dataset.id,S.weekly,WEEKLY,false,el));
-  document.querySelectorAll('#mainList .q').forEach(el=>el.onclick=()=>toggle(el.dataset.id,S.main,MAIN,false,el));
-  document.querySelectorAll('.a').forEach(el=>el.onclick=()=>{
-    const a=ACH.find(x=>x.id===el.dataset.ach);
-    if(a.auto&&!S.ach[a.id]){ toast('這個成就會自動解鎖,繼續玩就好'); return; }
-    S.ach[a.id]=!S.ach[a.id];
-    if(S.ach[a.id]){ toast('🏆 成就解鎖:'+a.n); sfxLoot('rare'); }
-    scheduleSave(); render();
-  });
+/* ═══════════════ 落印 ═══════════════ */
+function bindRows(){
+  document.querySelectorAll('#dailyList  .row').forEach(el=>bindRow(el,S.daily, DAILY, true));
+  document.querySelectorAll('#weeklyList .row').forEach(el=>bindRow(el,S.weekly,WEEKLY,false));
+  document.querySelectorAll('#mainList   .row').forEach(el=>bindRow(el,S.main,  MAIN,  false));
+  bindAch();
+}
+function bindRow(el,state,defs,isDaily){
+  const go=()=>toggle(el.dataset.id,state,defs,isDaily,el);
+  el.onclick=go;
+  el.onkeydown=e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); go(); } };
 }
 
 function toggle(id,state,defs,isDaily,el){
-  rollover();   // 頁面開著跨過 04:00、或剛載入舊存檔時,先結算換日,否則會把完美記到錯的日期
+  rollover();
+  if(locked()) return;
   const q=defs.find(x=>x.id===id);
   const was=!!state[id];
   state[id]=!was;
-  S.exp+=was?-q.xp:q.xp; if(S.exp<0)S.exp=0;
-  if(!was){ sfxCheck(); if(el){ const b=el.querySelector('.box'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); } }
+  S.exp += was ? -q.xp : q.xp; if(S.exp<0) S.exp=0;
+  if(isDaily) S.marks[S.date]=DAILY.filter(x=>S.daily[x.id]).length;
+
+  const listId = el && el.parentElement ? el.parentElement.id : '';
+
   const nowPerfect = isDaily && DAILY.every(x=>S.daily[x.id]);
   if(!was && nowPerfect && S.lastPerfect!==S.date){
     S.streak += 1;
     if(S.streak>S.bestStreak) S.bestStreak=S.streak;
     S.lastPerfect=S.date;
     S.history[S.date]=true;
-    sfxPerfect();
     checkAutoAch();
-    openLoot();          // ★ 完美觸發開箱
+    playAllSeal();
   } else if(was && isDaily && S.lastPerfect===S.date){
     S.streak=Math.max(0,S.streak-1);
     S.lastPerfect=''; delete S.history[S.date];
   } else if(!was && q.boss){
-    toast('🏆 BOSS 通關!誠實就是勝利'); sfxLoot('legend');
+    toast('關已破 · 誠實即勝'); sfxAllSeal(); buzz([30,50,30]);
   }
   scheduleSave(); render();
+
+  /* render() 會重建列表,所以按壓動畫要蓋在「新生的」印上 */
+  if(!was){
+    pressStamp(listId ? '#'+listId+' .row[data-id="'+id+'"] .stamp' : null);
+    sfxStamp(); buzz(18);
+  }
 }
 
+/* 蓋印的頓挫:全產品手感之錨 */
+function pressStamp(sel){
+  if(!sel) return;
+  const s=document.querySelector(sel);
+  if(!s) return;
+  s.classList.remove('pressing'); void s.offsetWidth; s.classList.add('pressing');
+}
+
+/* ═══════════════ 印譜:系統親授,不可自取 ═══════════════ */
+function bindAch(){
+  document.querySelectorAll('.in-cell').forEach(el=>{
+    const a=ACH.find(x=>x.id===el.dataset.ach);
+    let timer=null;
+    const start=()=>{
+      if(S.ach[a.id]) return;
+      if(a.auto){ toast('此印系統親授,時候到了自會落下'); return; }
+      if(locked()) return;
+      el.classList.add('holding');
+      timer=setTimeout(()=>{ el.classList.remove('holding'); confirmAch(a); }, 800);
+    };
+    const cancel=()=>{ clearTimeout(timer); el.classList.remove('holding'); };
+    el.addEventListener('pointerdown',start);
+    el.addEventListener('pointerup',cancel);
+    el.addEventListener('pointerleave',cancel);
+    el.addEventListener('pointercancel',cancel);
+    el.addEventListener('contextmenu',e=>e.preventDefault());
+    el.onkeydown=e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault();
+      if(S.ach[a.id]) return;
+      if(a.auto){ toast('此印系統親授,時候到了自會落下'); return; }
+      if(!locked()) confirmAch(a); } };
+  });
+}
+function confirmAch(a){
+  if(!confirm('落下「'+ACHNAME[a.id]+'」之印?\n此印一落不可取回。')) return;
+  S.ach[a.id]=true;
+  sfxStamp(); buzz([18,40,18]);
+  toast('印譜添一 · '+ACHNAME[a.id]);
+  scheduleSave(); render();
+  pressStamp('.in-cell[data-ach="'+a.id+'"] .seal');
+}
 function checkAutoAch(){
-  if(S.recTotal>=10 && !S.ach['a_unplug']){ S.ach['a_unplug']=true; toast('🏆 自動解鎖:拔線者'); }
-  if(S.streak>=7 && !S.ach['a_week']){ S.ach['a_week']=true; toast('🏆 自動解鎖:七日連勝'); }
+  const grant=(id)=>{ if(!S.ach[id]){ S.ach[id]=true; toast('系統親授 · '+ACHNAME[id]); sfxStamp(); } };
+  if(S.recTotal>=10) grant('a_unplug');
+  if(S.streak>=7)    grant('a_week');
+  if(S.rate>=100)    grant('a_power');
 }
 
-/* ── 隨機開箱 ── */
-function rollLoot(){
+/* ═══════════════ 皆印 + 籤詩 ═══════════════ */
+let allSealTimer=null;
+function playAllSeal(){
+  const box=document.getElementById('allSeal');
+  box.classList.add('show');
+  sfxAllSeal(); buzz([30,50,30,50,80]);
+  clearTimeout(allSealTimer);
+  allSealTimer=setTimeout(endAllSeal, 1500);
+}
+function endAllSeal(){
+  clearTimeout(allSealTimer);
+  const box=document.getElementById('allSeal');
+  if(!box.classList.contains('show')) return;
+  box.classList.remove('show');
+  drawOmikuji();
+}
+document.getElementById('allSeal').addEventListener('click', endAllSeal);
+
+function drawOmikuji(){
   const r=Math.random();
   const tier = r<0.05?'legend' : r<0.30?'rare' : 'common';
-  const pool=LOOT[tier];
+  const pool=OMIKUJI[tier];
   const item=pool[Math.floor(Math.random()*pool.length)];
   const bonus = tier==='legend'?15 : tier==='rare'?5 : 2;
-  return {tier,item,bonus};
-}
-function openLoot(){
-  const {tier,item,bonus}=rollLoot();
-  S.exp+=bonus;
-  document.getElementById('lootIco').textContent=item.ico;
-  const rr=document.getElementById('lootRare');
-  rr.className='loot-rare '+(tier==='legend'?'legend':tier==='rare'?'rare':'common');
-  rr.textContent = tier==='legend'?'★ ★ ★  LEGENDARY':tier==='rare'?'★ ★  RARE':'★  COMMON';
-  document.getElementById('lootBody').textContent=item.body;
-  document.getElementById('lootModal').classList.add('show');
-  sfxLoot(tier);
+  S.exp += bonus;
+  const g=document.getElementById('omiGrade');
+  g.textContent=OMIGRADE[tier];
+  document.getElementById('omiBody').textContent=item.body;
+  document.getElementById('omikujiBack').classList.add('show');
   scheduleSave();
 }
-document.getElementById('lootClose').onclick=()=>{ document.getElementById('lootModal').classList.remove('show'); render(); };
+document.getElementById('omiTake').onclick=()=>{ document.getElementById('omikujiBack').classList.remove('show'); render(); };
 
-/* 每日簽到 */
-document.getElementById('checkinBtn').onclick=doCheckin;
-
-/* 語錄 */
-document.getElementById('qtNext').onclick=()=>{ if(!S.quotes.length)return; S.quoteIdx=(S.quoteIdx+1)%S.quotes.length; scheduleSave(); render(); };
-document.getElementById('qtAddToggle').onclick=()=>{ document.getElementById('qtAddRow').classList.toggle('show'); document.getElementById('qtInput').focus(); };
-document.getElementById('qtSave').onclick=()=>{
-  const inp=document.getElementById('qtInput'); const v=inp.value.trim();
-  if(!v){ toast('先貼一句話再存'); return; }
-  S.quotes.push(v); S.quoteIdx=S.quotes.length-1; inp.value='';
-  document.getElementById('qtAddRow').classList.remove('show');
-  toast('🪞 已收藏 · 語錄庫 '+S.quotes.length+' 句'); sfxCheck();
-  scheduleSave(); render();
+/* ═══════════════ 其餘互動 ═══════════════ */
+/* 掛軸:預設唯讀,點軸身才展開 */
+document.getElementById('kakejiku').addEventListener('click',e=>{
+  if(e.target.closest('.edit')) return;
+  document.getElementById('kakeEdit').classList.toggle('show');
+});
+document.getElementById('kakeNext').onclick=()=>{ if(!S.quotes.length)return; S.quoteIdx=(S.quoteIdx+1)%S.quotes.length; scheduleSave(); renderKake(); };
+document.getElementById('kakeAdd').onclick=()=>{
+  document.getElementById('kakeAddRow').classList.toggle('show');
+  document.getElementById('kakeInput').focus();
 };
-document.getElementById('qtInput').addEventListener('keydown',e=>{ if(e.key==='Enter')document.getElementById('qtSave').click(); });
-document.getElementById('qtDel').onclick=()=>{ if(!S.quotes.length)return; S.quotes.splice(S.quoteIdx,1); if(S.quoteIdx>=S.quotes.length)S.quoteIdx=0; toast('已刪除'); scheduleSave(); render(); };
+document.getElementById('kakeSave').onclick=()=>{
+  const inp=document.getElementById('kakeInput'); const v=inp.value.trim();
+  if(!v){ toast('先寫一句再存'); return; }
+  S.quotes.push(v); S.quoteIdx=S.quotes.length-1; inp.value='';
+  document.getElementById('kakeAddRow').classList.remove('show');
+  toast('已入掛軸 · 共 '+cnNum(S.quotes.length)+' 句'); sfxStamp();
+  scheduleSave(); renderKake();
+};
+document.getElementById('kakeInput').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('kakeSave').click(); });
+document.getElementById('kakeDel').onclick=()=>{
+  if(!S.quotes.length) return;
+  if(!confirm('刪去此句?')) return;
+  S.quotes.splice(S.quoteIdx,1); if(S.quoteIdx>=S.quotes.length) S.quoteIdx=0;
+  toast('已刪'); scheduleSave(); renderKake();
+};
 
 /* 自給率 */
-document.getElementById('ratePlus').onclick=()=>{ const old=S.rate; S.rate=Math.min(100,S.rate+5); if(S.rate>old&&(S.rate===25||S.rate===50||S.rate===100)){ toast('🎉 里程碑達成:'+S.rate+'%'); sfxLoot('legend'); } scheduleSave(); render(); };
-document.getElementById('rateMinus').onclick=()=>{ S.rate=Math.max(0,S.rate-5); scheduleSave(); render(); };
+document.getElementById('ratePlus').onclick=()=>{
+  if(locked()) return;
+  const old=S.rate; S.rate=Math.min(100,S.rate+5);
+  if(S.rate>old && (S.rate===25||S.rate===50||S.rate===100)){ toast('里程已至 · '+({25:'廿五',50:'五十',100:'百'}[S.rate]||cnNum(S.rate))); sfxAllSeal(); buzz([25,40,25]); }
+  checkAutoAch(); scheduleSave(); render();
+};
+document.getElementById('rateMinus').onclick=()=>{ if(locked()) return; S.rate=Math.max(0,S.rate-5); scheduleSave(); render(); };
 
-/* 斷線重連 */
-document.getElementById('recBtn').onclick=()=>{
+/* 鐘 */
+document.getElementById('bellBody').onclick=()=>{
+  if(locked()) return;
+  const b=document.getElementById('bellBody');
+  b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring');
   S.recTotal+=1;
-  const m=document.getElementById('recMsg');
-  m.textContent=RECMSGS[S.recTotal%RECMSGS.length]; m.classList.add('show');
-  buzz(30); checkAutoAch(); scheduleSave(); render();
+  const m=monthStr(); S.bells[m]=(S.bells[m]||0)+1;
+  document.getElementById('bellMsg').textContent=BELLMSG[S.recTotal%BELLMSG.length];
+  sfxBell(); buzz([15,60,25]);
+  checkAutoAch(); scheduleSave(); render();
 };
 
-/* debuff */
-document.getElementById('prepPlus').onclick=()=>{ S.prep=Math.min(3,S.prep+1); if(S.prep>=3)buzz([40,60,40]); scheduleSave(); render(); };
-document.getElementById('prepMinus').onclick=()=>{ if(S.prep>0){ S.prep-=1; if(S.prep===0){ toast('🌀 準備模式解除——你推出去了什麼?好樣的'); sfxLoot('rare'); } } scheduleSave(); render(); };
+/* 積塵 */
+document.getElementById('dustPlus').onclick=()=>{ if(locked()) return; S.prep=Math.min(3,S.prep+1); if(S.prep>=3) buzz([40,60,40]); scheduleSave(); render(); };
+document.getElementById('dustMinus').onclick=()=>{
+  if(locked()) return;
+  if(S.prep>0){ S.prep-=1; if(S.prep===0){ toast('塵已拂去 · 你推出去了什麼?'); sfxStamp(); } }
+  scheduleSave(); render();
+};
 
-/* 設定 modal */
+/* 封存:不可逆 */
+document.getElementById('sealBtn').onclick=()=>{
+  if(S.sealed===S.date) return;
+  const n=DAILY.filter(q=>S.daily[q.id]).length;
+  if(!confirm('封存本日?\n今日 '+cnNum(n)+' 印。封存後當日紀錄轉為唯讀,不可再改。')) return;
+  S.sealed=S.date;
+  sfxSeal(); buzz([20,40,60]);
+  toast('本日已封存');
+  scheduleSave(); render();
+};
+
+/* 奧(設定) */
 const setModal=document.getElementById('setModal');
-document.getElementById('openSettings').onclick=openSettings;
-document.getElementById('synBadge').onclick=openSettings;
+document.getElementById('synMark').onclick=openSettings;
+document.getElementById('setClose').onclick=()=>setModal.classList.remove('show');
+setModal.addEventListener('click',e=>{ if(e.target===setModal) setModal.classList.remove('show'); });
 function openSettings(){
   loadCfg();
   document.getElementById('cfgKey').value=cfKey||'';
+  setMark(document.getElementById('synMark').className, document.getElementById('synMark').textContent);
   setModal.classList.add('show');
 }
 document.getElementById('setLocal').onclick=()=>{
   try{ localStorage.removeItem(CFGKEY); }catch(e){}
   cfKey=null; backend=hasLS()?'local':'memory';
-  setBadge(backend==='local'?'local':'err', backend==='local'?'● LOCAL':'● 無儲存');
+  setMark(backend==='local'?'':'err', backend==='local'?'此':'無');
   if(backend==='local'){ try{ localStorage.setItem(LSKEY,JSON.stringify(S)); }catch(e){} }
-  setModal.classList.remove('show'); toast('已切回本機儲存');
+  setModal.classList.remove('show'); toast('已改為僅存此機');
 };
 document.getElementById('setSave').onclick=async ()=>{
   const key=document.getElementById('cfgKey').value.trim();
   if(!key){ toast('先輸入通行碼'); return; }
   cfKey=key;
-  if(!saveCfg()) toast('本機無法儲存設定');
+  if(!saveCfg()) toast('此機無法保存設定');
   setModal.classList.remove('show');
-  setBadge('saving','● 連線中');
+  setMark('saving','連');
   try{
-    const remote=await apiGet();          // 測試通行碼 + 抓雲端
-    if(remote){                           // 雲端已有存檔 → 問要不要覆蓋本地
+    const remote=await apiGet();
+    if(remote){
       if(confirm('雲端已有存檔。要用雲端進度覆蓋目前畫面嗎?\n(取消 = 用目前畫面覆蓋雲端)')){
         S=migrate(remote);
-        rollover();   // 載進來的存檔可能是好幾天前的,一定要換日
+        rollover();
       }
     }
-    backend='cloud'; setBadge('ok','● SYNCED');
-    await runCloudSave();                 // 立即寫一次
-    toast('✅ 已連上雲端,之後自動同步');
+    backend='cloud'; setMark('ok','錄');
+    await runCloudSave();
+    toast('已接上雲端,此後自動同步');
     render();
   }catch(e){
     backend=hasLS()?'local':'memory';
-    setBadge('err','● 連線失敗');
+    setMark('err','闕');
     toast(e.message==='unauthorized' ? '通行碼不對,再確認一次' : '連線失敗:確認後端已部署');
   }
 };
 
-/* 分頁重新回到前景:可能已經跨日,補跑換日並重繪 */
+/* 回到前景:可能已過寅時 */
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState!=='visible' || !S) return;
-  const before=S.date, beforeWeek=S.week;
+  const b=S.date, bw=S.week;
   rollover();
-  if(S.date!==before || S.week!==beforeWeek){ scheduleSave(); render(); }
+  if(S.date!==b || S.week!==bw){ scheduleSave(); render(); }
 });
-
-/* 離開頁面前,若有待存的雲端變更,盡力補存本機 */
 window.addEventListener('beforeunload',()=>{ if(backend==='cloud'&&hasLS()){ try{ localStorage.setItem(LSKEY,JSON.stringify(S)); }catch(e){} } });
 
-/* ═══════════════ PWA:安裝 + 離線 ═══════════════ */
+/* ═══════════════ PWA ═══════════════ */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
 }
 let deferredPrompt=null;
-const installRow=document.getElementById('installRow');
+const installBtn=document.getElementById('installBtn');
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
 const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(!isStandalone) installRow.style.display='block'; });
-if(isiOS && !isStandalone){ installRow.style.display='block'; }
-document.getElementById('installBtn').onclick=async ()=>{
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(!isStandalone) installBtn.style.display='grid'; });
+if(isiOS && !isStandalone){ installBtn.style.display='grid'; }
+installBtn.onclick=async ()=>{
   if(deferredPrompt){
     deferredPrompt.prompt();
     const {outcome}=await deferredPrompt.userChoice; deferredPrompt=null;
-    if(outcome==='accepted'){ installRow.style.display='none'; toast('📲 已加入主畫面'); }
+    if(outcome==='accepted'){ installBtn.style.display='none'; toast('已置於主畫面'); }
   } else if(isiOS){
-    toast('iPhone:點 Safari 下方分享鍵 → 「加入主畫面」');
+    toast('iPhone:Safari 分享鍵 → 加入主畫面');
   } else {
     toast('用瀏覽器選單的「安裝 App / 加到主畫面」');
   }
 };
-window.addEventListener('appinstalled',()=>{ if(installRow) installRow.style.display='none'; });
+window.addEventListener('appinstalled',()=>{ if(installBtn) installBtn.style.display='none'; });
 
 init();
 </script>
