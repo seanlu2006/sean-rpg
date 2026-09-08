@@ -25,6 +25,46 @@
   --vermilion:#C33B2A;      /* 朱:僅限「完成/確認」 */
   --vermilion-deep:#A52E20; /* 朱的深階:按壓態、警語,以及所有朱色小字(5.3:1 以上) */
   --gold:#A08A4F;           /* 金:全系統僅一處 = 供電切換 */
+
+  /* 壓在朱印上的字。兩個主題都維持紙色——它不是「底色」,不隨明暗翻轉。
+     翻了就會變成深色字壓深紅底,整片印文消失。 */
+  --on-seal:#EFE9DC;
+  --vermilion-text:#A52E20; /* 朱色的「字」:日間用深階求對比,夜間提亮 */
+
+  /* 紙的質地,與各種墨的淡覆蓋 */
+  --grain:var(--grain);   --halo:rgba(38,34,28,.04);
+  --wash:rgba(38,34,28,.03);     --wash2:rgba(38,34,28,.06);
+  --track:rgba(38,34,28,.08);    --mute:rgba(38,34,28,.15);
+  --brush-fade:rgba(38,34,28,.55);
+  --seal-shadow:rgba(38,34,28,.18); --seal-shadow2:rgba(38,34,28,.2);
+  --scrim:rgba(38,34,28,.45);    --scrim2:rgba(38,34,28,.35);
+  --allseal-bg:rgba(239,233,220,.92);
+  --stamp-edge:rgba(195,59,42,.4);
+  --seal-ring:rgba(195,59,42,.25); --seal-ring2:rgba(195,59,42,.3);
+  --boss-wash:rgba(195,59,42,.06);
+}
+
+/* ── 夜間的道場:墨為地、紙為字 ──────────────────────────────
+   §6 淘汰的是舊版那套深色 RPG HUD(琥珀金/等寬字/浮起卡片),不是夜間
+   可讀性。版式、字族、朱印紀律一律不動,只翻明暗關係。
+   朱印的底色兩個主題完全相同——印泥就是印泥;只有朱色的「字」在暗底
+   上必須提亮,否則過不了對比。 */
+:root[data-theme="dark"]{
+  --paper:#1A1713;          --paper2:#232019;
+  --ink:#E4DED0;            --ink-soft:#9A917F;      --faint:#948B7A;
+  --line:rgba(228,222,208,.20);
+  --vermilion:#C33B2A;      --vermilion-deep:#A52E20;
+  --vermilion-text:#E66450; --gold:#A08A4F;          --on-seal:#EFE9DC;
+  --grain:rgba(228,222,208,.022);  --halo:rgba(228,222,208,.035);
+  --wash:rgba(228,222,208,.05);    --wash2:rgba(228,222,208,.08);
+  --track:rgba(228,222,208,.10);   --mute:rgba(228,222,208,.16);
+  --brush-fade:rgba(228,222,208,.55);
+  --seal-shadow:rgba(0,0,0,.55);   --seal-shadow2:rgba(0,0,0,.6);
+  --scrim:rgba(0,0,0,.6);          --scrim2:rgba(0,0,0,.55);
+  --allseal-bg:rgba(26,23,19,.94);
+  --stamp-edge:rgba(230,100,80,.75);
+  --seal-ring:rgba(230,100,80,.35); --seal-ring2:rgba(230,100,80,.45);
+  --boss-wash:rgba(195,59,42,.12);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
@@ -32,8 +72,8 @@ body{
   background:var(--paper);color:var(--ink);
   font-family:'Zen Old Mincho','Noto Serif TC',serif;line-height:1.7;
   background-image:
-    repeating-linear-gradient(90deg,rgba(38,34,28,.018) 0 1px,transparent 1px 88px),
-    radial-gradient(ellipse 120% 60% at 50% -20%,rgba(38,34,28,.04),transparent);
+    repeating-linear-gradient(90deg,var(--grain) 0 1px,transparent 1px 88px),
+    radial-gradient(ellipse 120% 60% at 50% -20%,var(--halo),transparent);
   background-attachment:fixed;
   min-height:100vh;padding-top:env(safe-area-inset-top);
 }
@@ -49,7 +89,7 @@ button{font-family:inherit;color:inherit}
 .hd .meta .cap{font-size:11px;color:var(--faint);letter-spacing:.25em;margin-top:6px}
 .hd .meta .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
 .hd .meta .tag{font-size:11px;letter-spacing:.2em;color:var(--ink-soft);border:1px solid var(--line);padding:3px 10px}
-.hd .meta .tag.full{border-color:var(--vermilion-deep);color:var(--vermilion-deep)}
+.hd .meta .tag.full{border-color:var(--vermilion-text);color:var(--vermilion-text)}
 
 /* ── 自給率:一筆墨痕 ── */
 .rate{margin:20px 0 0;padding:20px 0 22px;border-top:1px solid var(--ink);border-bottom:1px dotted var(--line)}
@@ -58,9 +98,9 @@ button{font-family:inherit;color:inherit}
 .rate .big small{font-size:18px;color:var(--faint);margin-left:2px}
 .rate .goal{font-size:11px;color:var(--faint);letter-spacing:.2em;text-align:right;line-height:1.9}
 .brush{margin-top:14px;height:14px;position:relative}
-.brush .track{position:absolute;inset:5px 0;background:rgba(38,34,28,.08);border-radius:7px}
+.brush .track{position:absolute;inset:5px 0;background:var(--track);border-radius:7px}
 .brush .stroke{position:absolute;left:0;top:0;bottom:0;width:0;
-  background:linear-gradient(90deg,var(--ink) 0%,var(--ink) 82%,rgba(38,34,28,.55) 94%,rgba(38,34,28,.15) 100%);
+  background:linear-gradient(90deg,var(--ink) 0%,var(--ink) 82%,var(--brush-fade) 94%,var(--mute) 100%);
   border-radius:7px 3px 12px 7px;
   clip-path:polygon(0 18%,97% 4%,100% 55%,98% 92%,1% 82%);
   transition:width .5s cubic-bezier(.2,.8,.2,1)}
@@ -70,7 +110,7 @@ button{font-family:inherit;color:inherit}
 .rate .marks{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:8px;letter-spacing:.1em}
 .rate .ctl{display:flex;align-items:center;gap:8px;margin-top:14px}
 .rate .ctl button{background:none;border:1px solid var(--line);padding:5px 12px;font-size:12px;letter-spacing:.2em;cursor:pointer}
-.rate .ctl button:active{background:rgba(38,34,28,.06)}
+.rate .ctl button:active{background:var(--wash2)}
 .rate .ctl .ms{margin-left:auto;font-size:10px;color:var(--faint);letter-spacing:.15em;text-align:right}
 
 /* ── 今日公案 ── */
@@ -86,19 +126,19 @@ button{font-family:inherit;color:inherit}
 
 /* ── 落印(全系統核心互動) ── */
 .rows .row{display:flex;align-items:center;gap:16px;padding:14px 2px;border-bottom:1px dotted var(--line);cursor:pointer;user-select:none}
-.rows .row:active{background:rgba(38,34,28,.03)}
+.rows .row:active{background:var(--wash)}
 .rows .row:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
-.stamp{width:36px;height:36px;flex:none;border:1.5px solid rgba(195,59,42,.4);border-radius:6px;display:grid;place-items:center;
+.stamp{width:36px;height:36px;flex:none;border:1.5px solid var(--stamp-edge);border-radius:6px;display:grid;place-items:center;
   color:transparent;font-weight:900;font-size:16px;transform:rotate(-3deg);transition:border-color .2s;position:relative}
-.row.done .stamp{background:var(--vermilion);color:var(--paper);border-color:var(--vermilion);box-shadow:1px 2px 0 rgba(38,34,28,.18)}
-.row.done .stamp::after{content:"";position:absolute;inset:-3px;border:1px solid rgba(195,59,42,.25);border-radius:8px;transform:rotate(2deg)}
+.row.done .stamp{background:var(--vermilion);color:var(--on-seal);border-color:var(--vermilion);box-shadow:1px 2px 0 var(--seal-shadow)}
+.row.done .stamp::after{content:"";position:absolute;inset:-3px;border:1px solid var(--seal-ring);border-radius:8px;transform:rotate(2deg)}
 .stamp.pressing{animation:press .32s cubic-bezier(.3,1.6,.5,1)}
 @keyframes press{0%{transform:rotate(-3deg) scale(1.5);opacity:.3}55%{transform:rotate(-3deg) scale(.92);opacity:1}100%{transform:rotate(-3deg) scale(1)}}
 .rows .name{flex:1;font-size:15px;letter-spacing:.05em;min-width:0}
 .rows .sub{font-size:11px;color:var(--faint);display:block;letter-spacing:.05em}
 .row.done .name{color:var(--faint)}
 .rows .val{font-size:13px;color:var(--faint);flex:none;letter-spacing:.1em}
-.row.done .val{color:var(--vermilion-deep)}
+.row.done .val{color:var(--vermilion-text)}
 
 /* ── 連印卷軸 ── */
 .scroll{margin:14px 0 0;padding:14px;border:1px solid var(--line);background:var(--paper2);overflow:hidden}
@@ -107,7 +147,7 @@ button{font-family:inherit;color:inherit}
 .seals i{aspect-ratio:1;border:1px solid var(--line);border-radius:3px;display:grid;place-items:center;
   font-size:9px;line-height:1;min-width:0;min-height:0;font-weight:900;color:transparent;transform:rotate(-2deg);font-style:normal}
 /* 印文只有 9px,壓在 --vermilion 上僅 4.36:1;改朱的深階 → 5.76:1,過 AA */
-.seals i.on{background:var(--vermilion-deep);color:var(--paper);border-color:var(--vermilion-deep)}
+.seals i.on{background:var(--vermilion-deep);color:var(--on-seal);border-color:var(--vermilion-deep)}
 .seals i.today{border:1.5px solid var(--vermilion);animation:breathe 2s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.5}50%{opacity:1}}
 
@@ -115,7 +155,7 @@ button{font-family:inherit;color:inherit}
 .inkchart{margin-top:14px;padding:16px 14px 10px;border:1px solid var(--line)}
 .inkchart .cap{font-size:10px;color:var(--faint);letter-spacing:.3em;margin-bottom:12px}
 .inkbars{display:flex;align-items:flex-end;gap:4px;height:56px}
-.inkbars i{flex:1;background:rgba(38,34,28,.15);border-radius:1px;min-height:2px}
+.inkbars i{flex:1;background:var(--mute);border-radius:1px;min-height:2px}
 .inkbars i.up{background:var(--ink)}
 .inkbars i.top{background:var(--vermilion)}
 .inkchart .axis{display:flex;justify-content:space-between;font-size:9px;color:var(--faint);margin-top:8px;letter-spacing:.1em}
@@ -130,24 +170,24 @@ button{font-family:inherit;color:inherit}
 .join .cells i b{font-size:12px;font-weight:900;color:transparent;line-height:1}
 .join .cells i em{font-size:9px;font-style:normal;color:var(--faint);letter-spacing:.05em}
 .join .cells i.done{background:var(--vermilion-deep);border-color:var(--vermilion-deep)}
-.join .cells i.done b{color:var(--paper)}
-.join .cells i.done em{color:var(--paper)}
+.join .cells i.done b{color:var(--on-seal)}
+.join .cells i.done em{color:var(--on-seal)}
 .join .cells i.today{border:1.5px solid var(--vermilion)}
-.join .btn{width:100%;padding:11px;border:1.5px solid var(--vermilion);background:none;color:var(--vermilion-deep);
+.join .btn{width:100%;padding:11px;border:1.5px solid var(--vermilion);background:none;color:var(--vermilion-text);
   font-size:14px;font-weight:900;letter-spacing:.4em;cursor:pointer;text-indent:.4em}
-.join .btn:active{background:var(--vermilion);color:var(--paper)}
+.join .btn:active{background:var(--vermilion);color:var(--on-seal)}
 .join .btn.done{border-color:var(--line);color:var(--faint);font-weight:400;letter-spacing:.3em;cursor:default}
 
 /* ── 本章試煉 ── */
 .trial .row .stamp{border-radius:50%}
-.trial .boss{background:linear-gradient(90deg,rgba(195,59,42,.06),transparent)}
+.trial .boss{background:linear-gradient(90deg,var(--boss-wash),transparent)}
 .trial .boss .name{font-weight:900}
 
 /* ── 印譜 ── */
 .inpu{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .in-cell{aspect-ratio:1;border:1px solid var(--line);display:grid;place-items:center;text-align:center;
   padding:8px;position:relative;cursor:pointer;user-select:none;overflow:hidden}
-.in-cell .seal{font-size:22px;font-weight:900;color:rgba(38,34,28,.15);transform:rotate(-4deg);line-height:1.2;letter-spacing:.05em}
+.in-cell .seal{font-size:22px;font-weight:900;color:var(--mute);transform:rotate(-4deg);line-height:1.2;letter-spacing:.05em}
 .in-cell.got .seal{color:var(--vermilion)}
 .in-cell.gold.got{border-color:rgba(160,138,79,.55)}
 .in-cell.gold.got .seal{color:var(--gold)}
@@ -166,7 +206,7 @@ button{font-family:inherit;color:inherit}
 @keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(7deg)}45%{transform:rotate(-6deg)}70%{transform:rotate(3deg)}}
 .bell .cap{font-size:13px;margin-top:16px;color:var(--ink-soft);letter-spacing:.08em;line-height:1.9}
 .bell .cnt{font-size:10px;color:var(--faint);letter-spacing:.3em;margin-top:8px}
-.bell .msg{font-size:12px;color:var(--vermilion-deep);margin-top:10px;min-height:18px;letter-spacing:.05em}
+.bell .msg{font-size:12px;color:var(--vermilion-text);margin-top:10px;min-height:18px;letter-spacing:.05em}
 
 /* ── 積塵 ── */
 .dust{display:flex;align-items:center;gap:16px;padding:14px 2px;border-top:1px dotted var(--line);border-bottom:1px dotted var(--line)}
@@ -178,8 +218,8 @@ button{font-family:inherit;color:inherit}
 .dust .bars i.on{background:var(--ink-soft);border-color:var(--ink-soft)}
 .dust .ctl{display:flex;flex-direction:column;gap:6px;flex:none}
 .dust .ctl button{width:36px;height:28px;border:1px solid var(--line);background:none;font-size:13px;cursor:pointer;line-height:1}
-.dust .ctl button:active{background:rgba(38,34,28,.06)}
-.dwarn{font-size:11px;color:var(--vermilion-deep);margin-top:6px;display:none;letter-spacing:.05em}
+.dust .ctl button:active{background:var(--wash2)}
+.dwarn{font-size:11px;color:var(--vermilion-text);margin-top:6px;display:none;letter-spacing:.05em}
 .dwarn.show{display:block}
 
 /* ── 掛軸 ── */
@@ -191,7 +231,7 @@ button{font-family:inherit;color:inherit}
 .kakejiku .edit.show{display:block}
 .kakejiku .edit .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .kakejiku .edit button{background:none;border:1px solid var(--line);font-size:11px;letter-spacing:.2em;padding:5px 12px;cursor:pointer}
-.kakejiku .edit button:active{background:rgba(38,34,28,.06)}
+.kakejiku .edit button:active{background:var(--wash2)}
 .kakejiku .edit .addrow{display:none;gap:6px;margin-top:10px}
 .kakejiku .edit .addrow.show{display:flex}
 .kakejiku .edit input{flex:1;min-width:0;background:var(--paper);border:1px solid var(--line);padding:8px 10px;
@@ -207,9 +247,9 @@ button{font-family:inherit;color:inherit}
   background:radial-gradient(circle,#E0642F,rgba(224,100,47,0) 70%);border-radius:50%;animation:ember 1.8s ease-in-out infinite}
 @keyframes ember{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
 .close .d{font-size:13px;color:var(--ink-soft);line-height:2}
-.close .btn{margin-top:16px;display:inline-block;border:1.5px solid var(--vermilion);color:var(--vermilion-deep);
+.close .btn{margin-top:16px;display:inline-block;border:1.5px solid var(--vermilion);color:var(--vermilion-text);
   font-size:14px;font-weight:900;letter-spacing:.4em;padding:10px 26px 10px 30px;cursor:pointer;background:none;transition:none}
-.close .btn:active{background:var(--vermilion);color:var(--paper)}
+.close .btn:active{background:var(--vermilion);color:var(--on-seal)}
 .close.sealed{border-style:double;border-width:3px}
 .close.sealed .incense::before{animation:none;opacity:.15}
 
@@ -219,7 +259,7 @@ body.sealed .join .btn,body.sealed .rate .ctl button,body.sealed .dust .ctl butt
 body.sealed .kakejiku .edit button{cursor:default}
 body.sealed .rows .name,body.sealed .rows .sub,body.sealed .rows .val{color:var(--faint)}
 body.sealed .rows .row.done .stamp{background:var(--ink-soft);border-color:var(--ink-soft);box-shadow:none}
-body.sealed .rows .row.done .stamp::after{border-color:rgba(38,34,28,.18)}
+body.sealed .rows .row.done .stamp::after{border-color:var(--mute)}
 body.sealed .close .btn{display:none}
 .sealnote{display:none;font-size:11px;color:var(--faint);letter-spacing:.4em;margin-top:14px}
 body.sealed .sealnote{display:block}
@@ -235,24 +275,24 @@ body.sealed .sealnote{display:block}
 .footmarks button.saving{border-style:dashed}
 
 /* ── 皆印(完美的一天) ── */
-.allseal{position:fixed;inset:0;z-index:200;display:none;place-items:center;background:rgba(239,233,220,.92)}
+.allseal{position:fixed;inset:0;z-index:200;display:none;place-items:center;background:var(--allseal-bg)}
 .allseal.show{display:grid}
 .allseal .flash{position:absolute;inset:0;background:var(--vermilion);opacity:0;animation:flash .4s ease-out}
 @keyframes flash{0%{opacity:1}100%{opacity:0}}
-.allseal .big{position:relative;width:180px;height:180px;background:var(--vermilion);color:var(--paper);
+.allseal .big{position:relative;width:180px;height:180px;background:var(--vermilion);color:var(--on-seal);
   display:grid;place-items:center;font-size:56px;font-weight:900;letter-spacing:.1em;line-height:1.05;
-  transform:rotate(-3deg);box-shadow:2px 3px 0 rgba(38,34,28,.2);animation:press .5s cubic-bezier(.3,1.6,.5,1)}
-.allseal .big::after{content:"";position:absolute;inset:-6px;border:2px solid rgba(195,59,42,.3);transform:rotate(2deg)}
+  transform:rotate(-3deg);box-shadow:2px 3px 0 var(--seal-shadow2);animation:press .5s cubic-bezier(.3,1.6,.5,1)}
+.allseal .big::after{content:"";position:absolute;inset:-6px;border:2px solid var(--seal-ring2);transform:rotate(2deg)}
 .allseal .skip{position:absolute;bottom:40px;font-size:10px;color:var(--faint);letter-spacing:.4em}
 
 /* ── 籤詩 ── */
-.omikuji-back{position:fixed;inset:0;z-index:210;display:none;justify-content:center;align-items:flex-start;background:rgba(38,34,28,.35)}
+.omikuji-back{position:fixed;inset:0;z-index:210;display:none;justify-content:center;align-items:flex-start;background:var(--scrim2)}
 .omikuji-back.show{display:flex}
 .omikuji{width:210px;background:var(--paper);border:1px solid var(--ink);border-top:none;
   padding:calc(26px + env(safe-area-inset-top)) 18px 22px;text-align:center;
   animation:draw .7s cubic-bezier(.2,.9,.25,1)}
 @keyframes draw{0%{transform:translateY(-100%)}100%{transform:translateY(0)}}
-.omikuji .grade{font-size:30px;font-weight:900;letter-spacing:.2em;color:var(--vermilion-deep);
+.omikuji .grade{font-size:30px;font-weight:900;letter-spacing:.2em;color:var(--vermilion-text);
   border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px;text-indent:.2em}
 .omikuji .body{font-size:13px;line-height:2.1;letter-spacing:.05em;text-align:left;color:var(--ink)}
 .omikuji .take{margin-top:20px;width:100%;border:1px solid var(--ink);background:none;padding:9px;
@@ -260,7 +300,7 @@ body.sealed .sealnote{display:block}
 .omikuji .take:active{background:var(--ink);color:var(--paper)}
 
 /* ── 奧(設定) ── */
-.modal{position:fixed;inset:0;background:rgba(38,34,28,.45);display:none;place-items:center;z-index:220;padding:20px}
+.modal{position:fixed;inset:0;background:var(--scrim);display:none;place-items:center;z-index:220;padding:20px}
 .modal.show{display:grid}
 .sheet{background:var(--paper);border:1px solid var(--ink);padding:24px 20px;max-width:380px;width:100%}
 .sheet h3{font-size:14px;font-weight:900;letter-spacing:.5em;text-align:center;margin-bottom:18px;text-indent:.5em}
@@ -269,12 +309,16 @@ body.sealed .sealnote{display:block}
 .sheet .fld label{font-size:10px;color:var(--faint);display:block;margin-bottom:6px;letter-spacing:.3em}
 .sheet .fld input{width:100%;background:var(--paper2);border:1px solid var(--line);padding:10px 12px;font-family:inherit;font-size:14px;color:var(--ink)}
 .sheet .fld input:focus{outline:none;border-color:var(--ink)}
+.sheet .seg{display:flex;gap:8px}
+.sheet .seg button{flex:1;background:none;border:1px solid var(--line);padding:9px 0;font-family:inherit;
+  font-size:12px;letter-spacing:.2em;color:var(--ink-soft);cursor:pointer;text-indent:.2em}
+.sheet .seg button.on{background:var(--ink);border-color:var(--ink);color:var(--paper);font-weight:700}
 .sheet .btnrow{display:flex;gap:8px}
 .sheet .btnrow button{flex:1;padding:11px;cursor:pointer;font-size:13px;letter-spacing:.25em;font-family:inherit}
 .sheet .btnrow .primary{background:var(--ink);border:1px solid var(--ink);color:var(--paper);font-weight:700}
 .sheet .btnrow .ghost{background:none;border:1px solid var(--line);color:var(--ink-soft)}
 .sheet .askbody{font-size:14px;line-height:2.1;color:var(--ink);text-align:center;letter-spacing:.05em;margin-bottom:22px}
-.sheet .askbody .warn{display:block;font-size:12px;color:var(--vermilion-deep);margin-top:8px;letter-spacing:.08em}
+.sheet .askbody .warn{display:block;font-size:12px;color:var(--vermilion-text);margin-top:8px;letter-spacing:.08em}
 .sheet .ver{font-size:10px;color:var(--faint);letter-spacing:.2em;text-align:center;margin-top:16px;line-height:2}
 .sheet .ver button{background:none;border:none;color:var(--faint);font-size:10px;letter-spacing:.2em;cursor:pointer;text-decoration:underline;font-family:inherit}
 
@@ -290,6 +334,18 @@ body.sealed .sealnote{display:block}
   .in-cell.holding{outline:1.5px solid var(--vermilion);outline-offset:-4px}
 }
 </style>
+<script>
+/* 在畫面畫出來之前就決定晝夜,否則夜裡開會先閃一下白紙——那一下最刺眼 */
+(function(){
+  var pref='auto';
+  try{ pref=localStorage.getItem('sean_rpg_theme')||'auto'; }catch(e){}
+  var dark = pref==='dark' ||
+    (pref==='auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  var m=document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute('content', dark?'#1A1713':'#EFE9DC');
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -474,6 +530,14 @@ body.sealed .sealnote{display:block}
     <div class="note">
       輸入通行碼後,進度自動同步到你自己的 Cloudflare 後端(改動後一兩秒存一次)。<br>
       換裝置只要再輸入同一組通行碼,不用再貼任何 API token。通行碼只留在這台裝置。
+    </div>
+    <div class="fld">
+      <label>晝 夜</label>
+      <div class="seg" id="themeRow">
+        <button data-theme="auto">隨 系 統</button>
+        <button data-theme="light">晝</button>
+        <button data-theme="dark">夜</button>
+      </div>
     </div>
     <div class="fld"><label>通 行 碼</label><input id="cfgKey" type="password" placeholder="你設定的那組通行碼" autocomplete="off"></div>
     <div class="btnrow">
@@ -730,6 +794,7 @@ async function init(){
   const remote = await backendLoad();
   S = remote ? migrate(remote) : freshState();
   if(!S.since) S.since = S.date || todayStr();
+  applyTheme();
   rollover();
   repairStreak();
   render();
@@ -768,6 +833,29 @@ function rollover(){
 function locked(){
   if(S.sealed===S.date){ toast('本日已封存,不可再改'); return true; }
   return false;
+}
+
+/* ═══════════════ 晝夜 ═══════════════ */
+const THEMEKEY='sean_rpg_theme';
+function themePref(){ try{ return localStorage.getItem(THEMEKEY)||'auto'; }catch(e){ return 'auto'; } }
+function applyTheme(){
+  const p=themePref();
+  const dark = p==='dark' || (p==='auto' && window.matchMedia
+    && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  const m=document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute('content', dark?'#1A1713':'#EFE9DC');
+  document.querySelectorAll('#themeRow button').forEach(b=>b.classList.toggle('on', b.dataset.theme===p));
+}
+document.querySelectorAll('#themeRow button').forEach(b=>{
+  b.onclick=()=>{ try{ localStorage.setItem(THEMEKEY,b.dataset.theme); }catch(e){} applyTheme(); };
+});
+/* 掛著沒關、系統到了晚上自己翻的時候要跟上 */
+if(window.matchMedia){
+  const mq=window.matchMedia('(prefers-color-scheme: dark)');
+  const onFlip=()=>{ if(themePref()==='auto') applyTheme(); };
+  if(mq.addEventListener) mq.addEventListener('change',onFlip);
+  else if(mq.addListener) mq.addListener(onFlip);
 }
 
 /* ═══════════════ 連印重算 ═══════════════ */
@@ -1211,6 +1299,7 @@ document.getElementById('setClose').onclick=()=>setModal.classList.remove('show'
 setModal.addEventListener('click',e=>{ if(e.target===setModal) setModal.classList.remove('show'); });
 function openSettings(){
   loadCfg();
+  applyTheme();
   document.getElementById('cfgKey').value=cfKey||'';
   setMark(document.getElementById('synMark').className, document.getElementById('synMark').textContent);
   setModal.classList.add('show');
