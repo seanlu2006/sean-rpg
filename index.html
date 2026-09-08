@@ -704,6 +704,8 @@ function freshState(){
     sealed:'',           // 已封存的日期
     allSealDate:'',      // 皆印演出與籤詩:每日僅一次
     since:'',            // 修行第一日
+    streakFixed:false,   // 連印數是否已依 history 重算過(一次性)
+    streakBefore:null,   // 重算前的舊值,留著可回溯
     quotes: DEFAULT_QUOTES.slice(), quoteIdx: 0
   };
 }
@@ -729,7 +731,9 @@ async function init(){
   S = remote ? migrate(remote) : freshState();
   if(!S.since) S.since = S.date || todayStr();
   rollover();
+  repairStreak();
   render();
+  if(repairNote) setTimeout(()=>toast(repairNote), 600);
   if(backend!=='cloud' && hasLS() && !localStorage.getItem('sean_rpg_hint')){
     setTimeout(()=>toast('想跨裝置同步?點頁尾印記輸入通行碼'),1200);
     try{ localStorage.setItem('sean_rpg_hint','1'); }catch(e){}
@@ -764,6 +768,40 @@ function rollover(){
 function locked(){
   if(S.sealed===S.date){ toast('本日已封存,不可再改'); return true; }
   return false;
+}
+
+/* ═══════════════ 連印重算 ═══════════════ */
+/* history 從第一版就在,記的是「當日七印齊落」,是唯一可信的事實來源。
+   舊版有兩個計數 bug(完美日重複加、跨空白日仍續加),會讓 streak/bestStreak
+   虛胖。這裡依 history 重算一次,舊值留在 streakBefore,不覆蓋掉就回不去。 */
+function bestRunFromHistory(hist){
+  const days = Object.keys(hist).filter(k=>hist[k]).sort();
+  let best=0, cur=0, prev=null;
+  for(const k of days){
+    const d=parseKey(k);
+    cur = (prev && Math.round((d-prev)/86400000)===1) ? cur+1 : 1;
+    if(cur>best) best=cur;
+    prev=d;
+  }
+  return best;
+}
+function currentRunFromHistory(hist){
+  const d=gameNow();
+  if(!hist[keyOf(d)]) d.setDate(d.getDate()-1);   // 今日尚未圓滿 → 連印停在昨日
+  let n=0;
+  while(hist[keyOf(d)]){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+let repairNote=null;
+function repairStreak(){
+  if(S.streakFixed) return;
+  S.streakFixed=true;
+  const b=bestRunFromHistory(S.history), c=currentRunFromHistory(S.history);
+  if(b===S.bestStreak && c===S.streak) return;
+  S.streakBefore={bestStreak:S.bestStreak, streak:S.streak, at:new Date().toISOString()};
+  repairNote='連印已依印譜重算 · 最長 '+cnNum(S.bestStreak)+' → '+cnNum(b)+' 日';
+  S.bestStreak=b; S.streak=c;
+  scheduleSave();
 }
 
 /* ═══════════════ 請示(道場版 confirm) ═══════════════ */
@@ -1197,6 +1235,8 @@ document.getElementById('setSave').onclick=async ()=>{
       if(await ask('雲端已有存檔。<span class="warn">選「用雲端」會蓋掉目前畫面;選「用本機」會蓋掉雲端。</span>','用 雲 端','用 本 機')){
         S=migrate(remote);
         rollover();
+        repairStreak();
+        if(repairNote) setTimeout(()=>toast(repairNote), 600);
       }
     }
     backend='cloud'; setMark('ok','錄');
