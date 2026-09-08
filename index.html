@@ -1089,6 +1089,9 @@ function drawOmikuji(){
 document.getElementById('omiTake').onclick=()=>{ document.getElementById('omikujiBack').classList.remove('show'); render(); };
 
 /* ═══════════════ 其餘互動 ═══════════════ */
+/* 日參 */
+document.getElementById('joinBtn').onclick=doJoin;
+
 /* 掛軸:預設唯讀,點軸身才展開 */
 document.getElementById('kakejiku').addEventListener('click',e=>{
   if(e.target.closest('.edit')) return;
