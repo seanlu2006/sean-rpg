@@ -26,6 +26,15 @@ Cloudflare Pages（同源）
 
 ## 部署
 
+Cloudflare Pages 已接上這個 repo 的 `master` 分支。**改完前端 push 就會自動部署**，不必再手動傳。
+
+- Production branch：`master`
+- Build command：無（純靜態，repo 裡沒有 package.json）
+- Build output directory：`/`
+- `functions/` 由 Pages 自動偵測為 Pages Functions
+
+### 一次性設定（已完成，重建環境時才需要）
+
 需要先 `npx wrangler login`（互動式，要在你自己的終端機跑）。
 
 ```bash
@@ -37,15 +46,20 @@ npx wrangler d1 execute sean-rpg-db --remote --file=schema.sql
 
 # 3. 匯入舊存檔（可選，只做一次）
 npx wrangler d1 execute sean-rpg-db --remote --file=seed-save.sql
-
-# 4. 部署
-npx wrangler pages deploy .
-
-# 5. 設定通行碼（互動輸入，不會留在指令歷史）
-npx wrangler pages secret put RPG_KEY --project-name sean-rpg
 ```
 
-改完前端重跑第 4 步即可。
+D1 綁定（`DB` → `sean-rpg-db`）宣告在 `wrangler.toml`；通行碼 `RPG_KEY` 設在 Cloudflare 後台
+Settings → Variables and secrets，型別選 Secret。**改動 secret 後要重跑一次部署才會生效。**
+
+### 部署壞掉時怎麼判斷
+
+打 `GET /api/save`（不帶標頭）看回應碼：
+
+| 回應 | 意思 |
+|---|---|
+| `401` | 正常。Functions 活著、D1 綁定在、`RPG_KEY` 有生效 |
+| `500` | D1 綁定掉了 |
+| `200` | `RPG_KEY` 沒設，或設完沒重新部署 |
 
 ## 安全鐵律
 
