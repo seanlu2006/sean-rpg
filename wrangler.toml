@@ -1,7 +1,7 @@
 # SEAN: Self-Funded — Cloudflare Pages 設定
 name = "sean-rpg"
 compatibility_date = "2026-09-04"
-pages_build_output_dir = "."
+pages_build_output_dir = "public"   # 只有 public/ 會被部署;db/、README 等不對外
 
 # D1:存檔資料庫。database_id 由 `wrangler d1 create` 產生後填入。
 [[d1_databases]]
