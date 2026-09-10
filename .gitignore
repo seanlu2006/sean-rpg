@@ -8,7 +8,11 @@ sean_rpg_ghcfg*
 # 本機雜物
 .DS_Store
 Thumbs.db
+*.log
+.vscode/
+.idea/
+node_modules/
 
 # Cloudflare
 .wrangler/
-.dev.vars
+.dev.vars*
