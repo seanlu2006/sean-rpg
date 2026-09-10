@@ -49,10 +49,15 @@
 ## 架構
 
 ```
-Cloudflare Pages（同源）
-  ├─ index.html             面板本體（單檔，無 build step）
-  └─ functions/api/save.js  GET/PUT 存檔
-        └─ D1  saves 資料表
+sean-rpg/
+  ├─ public/                ← 只有這裡的東西會被部署
+  │    └─ index.html        面板本體（單檔，無 build step）＋ PWA 資源
+  ├─ functions/api/save.js  GET/PUT 存檔（Pages 從 repo 根目錄偵測）
+  │    └─ D1  saves 資料表
+  └─ db/                    只是原始碼，不會上線
+       ├─ schema.sql        重建資料表
+       ├─ seed-save.sql     舊存檔匯入（已執行過）
+       └─ repair.sql        一次性修補（已執行過）
 ```
 
 面板打自家的 `/api/save`，帶一個 `X-RPG-Key` 標頭，伺服器拿它跟 Cloudflare 上的密鑰 `RPG_KEY` 比對。
@@ -87,8 +92,8 @@ Cloudflare Pages 已接上這個 repo 的 `master` 分支，**push 就自動部�
 
 - Production branch：`master`
 - Build command：無（純靜態，repo 裡沒有 package.json）
-- Build output directory：`/`
-- `functions/` 由 Pages 自動偵測為 Pages Functions
+- Build output directory：`public`（由 `wrangler.toml` 的 `pages_build_output_dir` 指定）
+- `functions/` 留在 **repo 根目錄**，Pages 是從專案根目錄偵測它，不是從輸出目錄
 
 D1 綁定（`DB` → `sean-rpg-db`）宣告在 `wrangler.toml`；通行碼 `RPG_KEY` 設在後台 Settings → Variables and secrets，型別選 Secret。**改動 secret 後要重跑一次部署才生效。**
 
@@ -97,7 +102,7 @@ D1 綁定（`DB` → `sean-rpg-db`）宣告在 `wrangler.toml`；通行碼 `RPG_
 ```bash
 npx wrangler login
 npx wrangler d1 create sean-rpg-db          # 把回傳的 database_id 填進 wrangler.toml
-npx wrangler d1 execute sean-rpg-db --remote --file=schema.sql
+npx wrangler d1 execute sean-rpg-db --remote --file=db/schema.sql
 ```
 
 ### 壞掉時怎麼判斷
@@ -125,5 +130,5 @@ npx wrangler d1 execute sean-rpg-db --remote --file=schema.sql
 - 多裝置**同時**寫入是最後寫的贏（單人使用幾乎遇不到）。PUT 失敗會 fallback 寫本機，不會壞資料。
 - 音效用 WebAudio 合成、震動用 `navigator.vibrate`；iOS Safari 需先互動一次才會出聲，屬正常。
 - 顯示偏好（晝夜）存 localStorage，**不進雲端存檔**——手機用夜間、桌機用日間應該各自獨立。
-- `schema.sql`、`README.md` 等檔案會跟著靜態資源一起對外可讀。repo 本身是公開的，沒有洩密，但確實是雜訊。
+- 站台沒有 404 頁：不存在的路徑一律回 `index.html`（Pages 預設行為）。單頁面板無妨，深層連結照樣開得起來。
 - `sean-rpg-save` 那個 private repo 是舊的 GitHub 存檔後端，留著當歷史備份，面板已不再讀寫。
