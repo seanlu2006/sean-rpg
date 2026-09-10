@@ -1,57 +1,106 @@
-# SEAN: Self-Funded
+# 自給修行 · SEAN: Self-Funded
 
-一個單檔 HTML 的人生 RPG 打卡面板。前端純靜態，存檔放在自己的 Cloudflare D1。
+一個單檔 HTML 的每日紀錄面板，做成日本道場的樣子：和紙、墨、朱印。追蹤的是我想長期做好的那幾件事——交易紀律、健身、閱讀、產出——最上面那條進度是**生活費自給率**，這個面板真正在等的數字。
 
-- **前端**：`index.html`（單檔，無 build step）
-- **後端**：`functions/api/save.js`（Cloudflare Pages Functions）
-- **資料庫**：Cloudflare D1（`schema.sql`）
-- **PWA**：可加到主畫面、離線開啟（`manifest.json` + `sw.js`）
+它要解決的不是「忘記打卡」，是**打卡會變得沒意義**。多數習慣 App 用點數和連續天數推著你走，撐三週後你會發現自己是為了不讓數字斷掉才做的，然後某天想通「點數又不能幹嘛」，就再也不開了。所以這裡不發點數當誘餌：完成一件事就蓋一枚朱印，按下去有頓挫、有聲音、蓋了不能取消；三十枚印排成一片，那個累積本身就是證據，不需要換算成分數。
+
+線上：**https://sean-rpg.pages.dev**（PWA，可加到主畫面、離線開得起來）
+
+> 這是給自己用的東西，任務內容、公案、語錄都是我的。要拿去改的話，資料都寫在 `index.html` 最上面的常數區。
+
+---
+
+## 面板上有什麼
+
+| 區塊 | 做什麼 |
+|---|---|
+| **一筆墨痕** | 生活費自給率 0→100%，一筆橫墨帶飛白，筆尖一點朱 |
+| **今日公案** | 每日隨機一題自問，換日才換題 |
+| **日課** | 七件每日的事。七印齊落 = 完美的一天 |
+| **連印卷軸** | 近三十日的皆印紀錄，十五欄兩行 |
+| **墨K線** | 近七日落印數的走勢，達標日實心墨、今日一根朱 |
+| **日參** | 只要「有來」就落一印，七日一輪 |
+| **週課 / 本章試煉** | 每週重置的事；跨月的主線與「關」 |
+| **印譜** | 六枚成就印。自動觸發的系統親授，手動的要長按八百毫秒＋確認，不可一鍵自取 |
+| **鐘** | 掉進短影音時敲一下，記月不記總——弱化累計羞恥 |
+| **積塵** | 只磨刀不出鞘的一天積一層。用淡墨，不用朱 |
+| **掛軸** | 收藏的句子，預設唯讀，點軸身才展開編輯 |
+| **收盤儀式** | 一炷香。按「封存」後當日紀錄**真的轉唯讀**，不是只變灰 |
+| **皆印** | 七印齊落的爆點演出，之後抽一張籤詩。每日僅一次 |
+
+**寅時換日**：凌晨 04:00 才算新的一天，週一 04:00 換週課。熬夜到兩點做完的事算前一天。
+
+---
+
+## 設計紀律
+
+視覺規格寫在另一份文件裡，這裡只記幾條會被反覆違反的：
+
+- **朱 = 「你做到了」**。禁止拿來當裝飾或標題強調。未完成的東西一律是墨的深淺。
+- **金全站只有一處**：印譜裡的「供電切換」。出現第二次就是違規。
+- **常駐動效只有兩個**：香的火點、連印卷軸的今日格。其餘動效一律由你的動作觸發。
+- **無 emoji、無等寬字、無浮起陰影卡片**。層次靠邊線、留白和字距。
+- 蓋印的頓挫（`press` 動畫 + 震動 + 低頻印聲）是全產品的手感之錨，不要改成淡入或打勾。
+
+**晝夜**：預設跟隨系統外觀。頁尾印記 →「奧」→ 可改成固定晝或夜。夜間版不是把舊的深色主題撈回來，是同一座道場的夜間樣貌——墨為地、紙為字，版式與朱印紀律不動。朱印的**底色兩個主題完全相同**（印泥就是印泥），只有朱色的**字**在暗底上提亮。
+
+---
 
 ## 架構
 
 ```
 Cloudflare Pages（同源）
-  ├─ index.html            面板本體
+  ├─ index.html             面板本體（單檔，無 build step）
   └─ functions/api/save.js  GET/PUT 存檔
         └─ D1  saves 資料表
 ```
 
-面板打自家的 `/api/save`，帶一個 `X-RPG-Key` 標頭。伺服器拿它跟 Cloudflare 上的密鑰 `RPG_KEY` 比對。
+面板打自家的 `/api/save`，帶一個 `X-RPG-Key` 標頭，伺服器拿它跟 Cloudflare 上的密鑰 `RPG_KEY` 比對。
 
-**為什麼從 GitHub 搬過來**：舊版把 GitHub fine-grained token 存在每一台裝置的 localStorage，換裝置就得重貼一次 90 幾字元的 token，token 過期還要每台重換。現在改成「**憑證留在伺服器，裝置只記一組你背得起來的通行碼**」——換裝置只要再打一次同一組碼。
+**為什麼憑證不放裝置上**：舊版把 GitHub fine-grained token 存在每台裝置的 localStorage，換裝置要重貼九十幾字元的 token，過期還得每台重換。現在是「憑證留在伺服器，裝置只記一組你背得起來的通行碼」。
 
-## 沒設定通行碼時
+**沒設通行碼時**自動降級成 localStorage；連 localStorage 都不可用就降級成記憶體（不存）。
 
-自動降級成 localStorage 本機儲存；連 localStorage 都不可用時降級成記憶體（不存）。這段邏輯已寫好。
+### 存檔長什麼樣
+
+單人面板，D1 裡固定一列 `id='sean'`，整份狀態是一個 JSON：
+
+| 欄位 | 內容 |
+|---|---|
+| `rate` `exp` | 自給率、總 EXP |
+| `daily` `weekly` `main` `ach` | 各清單的完成狀態，key 是任務 id |
+| `history` | `{'YYYY-MM-DD': true}` 皆印之日 → 連印卷軸 |
+| `marks` | `{'YYYY-MM-DD': n}` 當日落印數 → 墨K線 |
+| `bells` | `{'YYYY-MM': n}` 每月鐘響 |
+| `streak` `bestStreak` | 連印數。逐日累加，但曾依 `history` 重算過一次校正舊 bug（見 `streakFixed` / `streakBefore`，舊值有留） |
+| `sealed` `allSealDate` | 已封存的日期、今日是否已演過皆印 |
+| `since` | 修行第一日，頁首「第 N 日」用 |
+| `quotes` `quoteIdx` | 掛軸 |
+
+任務 id（`trade` `iron` `m_boss` `a_power`…）是存檔相容的關鍵，**改文案可以，改 id 會讓舊紀錄對不上**。
+
+---
 
 ## 部署
 
-Cloudflare Pages 已接上這個 repo 的 `master` 分支。**改完前端 push 就會自動部署**，不必再手動傳。
+Cloudflare Pages 已接上這個 repo 的 `master` 分支，**push 就自動部署**，約 20 秒。
 
 - Production branch：`master`
 - Build command：無（純靜態，repo 裡沒有 package.json）
 - Build output directory：`/`
 - `functions/` 由 Pages 自動偵測為 Pages Functions
 
-### 一次性設定（已完成，重建環境時才需要）
+D1 綁定（`DB` → `sean-rpg-db`）宣告在 `wrangler.toml`；通行碼 `RPG_KEY` 設在後台 Settings → Variables and secrets，型別選 Secret。**改動 secret 後要重跑一次部署才生效。**
 
-需要先 `npx wrangler login`（互動式，要在你自己的終端機跑）。
+### 一次性設定（重建環境時才需要）
 
 ```bash
-# 1. 建 D1，把回傳的 database_id 填進 wrangler.toml
-npx wrangler d1 create sean-rpg-db
-
-# 2. 建表
+npx wrangler login
+npx wrangler d1 create sean-rpg-db          # 把回傳的 database_id 填進 wrangler.toml
 npx wrangler d1 execute sean-rpg-db --remote --file=schema.sql
-
-# 3. 匯入舊存檔（可選，只做一次）
-npx wrangler d1 execute sean-rpg-db --remote --file=seed-save.sql
 ```
 
-D1 綁定（`DB` → `sean-rpg-db`）宣告在 `wrangler.toml`；通行碼 `RPG_KEY` 設在 Cloudflare 後台
-Settings → Variables and secrets，型別選 Secret。**改動 secret 後要重跑一次部署才會生效。**
-
-### 部署壞掉時怎麼判斷
+### 壞掉時怎麼判斷
 
 打 `GET /api/save`（不帶標頭）看回應碼：
 
@@ -59,21 +108,22 @@ Settings → Variables and secrets，型別選 Secret。**改動 secret 後要�
 |---|---|
 | `401` | 正常。Functions 活著、D1 綁定在、`RPG_KEY` 有生效 |
 | `500` | D1 綁定掉了 |
-| `200` | `RPG_KEY` 沒設，或設完沒重新部署 |
+| `200` | `RPG_KEY` 沒設，或設完忘了重新部署 |
+
+---
 
 ## 安全鐵律
 
-- **通行碼建議 12 字元以上。** API 端點是公開的，太短的碼會被暴力猜。
+- **通行碼十二字元以上**。API 端點是公開的，太短會被暴力猜。
 - `RPG_KEY` 只放 Cloudflare secret，**不要**寫進 `wrangler.toml` 或任何檔案。
 - 面板本身不含任何密鑰，`index.html` 可以公開。
-- `.dev.vars`、`.wrangler/` 已在 `.gitignore` 裡，不要提交。
-- 想撤銷所有裝置的存取：重設 `RPG_KEY` 即可，每台裝置需重新輸入新碼。
+- `.dev.vars`、`.wrangler/` 已在 `.gitignore`，不要提交。
+- 想撤銷所有裝置的存取：重設 `RPG_KEY`，每台裝置需重輸新碼。
 
 ## 已知邊界
 
-- 多裝置**同時**寫入是最後寫的贏（單人使用幾乎不會遇到）。PUT 失敗會 fallback 寫本機，不會壞資料。
-- 打勾音效用 WebAudio 合成、震動用 `navigator.vibrate`；iOS Safari 需先互動一次才會出聲，屬正常。
-
-## 舊版
-
-`sean-rpg-save` 這個 private repo 是舊的 GitHub 存檔後端，遷移完成後可以留著當歷史備份，面板已不再讀寫它。
+- 多裝置**同時**寫入是最後寫的贏（單人使用幾乎遇不到）。PUT 失敗會 fallback 寫本機，不會壞資料。
+- 音效用 WebAudio 合成、震動用 `navigator.vibrate`；iOS Safari 需先互動一次才會出聲，屬正常。
+- 顯示偏好（晝夜）存 localStorage，**不進雲端存檔**——手機用夜間、桌機用日間應該各自獨立。
+- `schema.sql`、`README.md` 等檔案會跟著靜態資源一起對外可讀。repo 本身是公開的，沒有洩密，但確實是雜訊。
+- `sean-rpg-save` 那個 private repo 是舊的 GitHub 存檔後端，留著當歷史備份，面板已不再讀寫。
