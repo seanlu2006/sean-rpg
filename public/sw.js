@@ -24,6 +24,8 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return; // 跨源(API/字型)不管,原生走網路
+  // 存檔 API 是同源的,會落進下面的快取優先分支 —— 那會讀到舊存檔。一律走網路。
+  if (url.pathname.startsWith('/api/')) return;
 
   // 導覽請求:網路優先,失敗回快取的 index(離線可開)
   if (req.mode === 'navigate') {
