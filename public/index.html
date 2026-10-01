@@ -82,7 +82,7 @@ body{
    第二層紙(卷軸、日參、鐘、掛軸)也有自己的纖維,像另裱的一張紙 */
 body::before,.scroll::before,.join::before,.bell::before,.kakejiku::before{content:"";position:absolute;inset:0;z-index:-1;
   pointer-events:none;background:var(--fiber);
-  -webkit-mask-image:var(--paper-mask,none);mask-image:var(--paper-mask,none);
+  -webkit-mask-image:var(--paper-mask,linear-gradient(transparent,transparent));mask-image:var(--paper-mask,linear-gradient(transparent,transparent));
   -webkit-mask-size:256px 256px;mask-size:256px 256px}
 .scroll,.join,.bell,.kakejiku{position:relative;isolation:isolate}
 button{font-family:inherit;color:inherit}
@@ -95,6 +95,24 @@ button{font-family:inherit;color:inherit}
 .hd .meta{text-align:left;min-width:0}
 .hd .meta .date{font-size:36px;font-weight:600;line-height:1.15;letter-spacing:.04em}
 .hd .meta .cap{font-size:11px;color:var(--faint);letter-spacing:.25em;margin-top:6px}
+.hd .meta .sky{font-size:11px;color:var(--faint);letter-spacing:.25em;margin-top:2px}
+/* 入門:每個寅時日第一次打開,日期像墨滲進紙裡一樣浮現,然後紙掀開 */
+.gate{position:fixed;inset:0;z-index:300;display:none;place-content:center;justify-items:center;gap:16px;
+  background:var(--paper);isolation:isolate}
+.gate::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--fiber);
+  -webkit-mask-image:var(--paper-mask,linear-gradient(transparent,transparent));mask-image:var(--paper-mask,linear-gradient(transparent,transparent));-webkit-mask-size:256px 256px;mask-size:256px 256px}
+html.gating .gate{display:grid;animation:gatesafe 0s linear 4s forwards}   /* 保險:腳本出事也會自己退場 */
+@keyframes gatesafe{to{visibility:hidden}}
+.gate .g-date{font-size:44px;font-weight:600;letter-spacing:.14em;text-indent:.14em;opacity:0}
+.gate .g-sky{font-size:12px;color:var(--faint);letter-spacing:.5em;text-indent:.5em;opacity:0}
+.gate.show .g-date{animation:inkin 1.05s cubic-bezier(.2,.7,.2,1) .05s forwards}
+.gate.show .g-sky{animation:skyin .6s ease-out .5s forwards}
+.gate.out{animation:gateout .45s ease-in forwards}
+@keyframes inkin{0%{opacity:0;filter:blur(10px);letter-spacing:.5em}60%{opacity:1}100%{opacity:1;filter:blur(0);letter-spacing:.14em}}
+@keyframes skyin{to{opacity:1}}
+@keyframes gateout{to{opacity:0;transform:translateY(-12px)}}
+.first-hint{font-size:12px;color:var(--faint);letter-spacing:.2em;margin:2px 0 6px;display:none}
+.first-hint.show{display:block}
 .hd .meta .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
 .hd .meta .tag{font-size:11px;letter-spacing:.2em;color:var(--ink-soft);border:1px solid var(--line);padding:3px 10px}
 .hd .meta .tag.full{border-color:var(--vermilion-text);color:var(--vermilion-text)}
@@ -407,10 +425,17 @@ body.sealed .sealnote{display:block}
   document.documentElement.setAttribute('data-theme', dark?'dark':'light');
   var m=document.querySelector('meta[name="theme-color"]');
   if(m) m.setAttribute('content', dark?'#1A1713':'#EFE9DC');
+  try{
+    var d=new Date(); d.setHours(d.getHours()-4);
+    var key=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    var calm=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!calm && localStorage.getItem('sean_rpg_entered')!==key) document.documentElement.classList.add('gating');
+  }catch(e){}
 })();
 </script>
 </head>
 <body>
+<div class="gate" id="gate" aria-hidden="true"><div class="g-date" id="gateDate"></div><div class="g-sky" id="gateSky"></div></div>
 <div class="wrap">
 
   <!-- 頁首 -->
@@ -418,6 +443,7 @@ body.sealed .sealnote{display:block}
     <div class="meta">
       <div class="date" id="hdDate"></div>
       <div class="cap" id="hdDay"></div>
+      <div class="sky" id="hdSky"></div>
       <div class="tags">
         <span class="tag">修 行 第 一 章 · 策 略 成 型</span>
         <span class="tag" id="hdToday"></span>
@@ -454,6 +480,7 @@ body.sealed .sealnote{display:block}
   <!-- 日課 -->
   <div class="sec">
     <div class="sec-hd"><h2>日 課</h2><div class="n" id="dailyN"></div></div>
+    <div class="first-hint" id="firstHint">輕觸印格,落下今日第一印</div>
     <div class="rows" id="dailyList"></div>
 
     <!-- 連印卷軸 -->
@@ -1176,6 +1203,7 @@ function migrate(s){
 }
 
 async function init(){
+  enterGate();
   const remote = await backendLoad();
   S = remote ? migrate(remote) : freshState();
   if(!S.since) S.since = S.date || todayStr();
@@ -1185,6 +1213,7 @@ async function init(){
   render();
   materialsReady().then(render);
   Smoke.init();
+  setInterval(paintSky, 60000);
   if(window.ResizeObserver){ new ResizeObserver(()=>{ if(S){ paintRate(); paintChart(); } }).observe(document.querySelector('.wrap')); }
   if(repairNote) setTimeout(()=>toast(repairNote), 600);
   if(backend!=='cloud' && hasLS() && !localStorage.getItem('sean_rpg_hint')){
@@ -1302,6 +1331,38 @@ document.getElementById('askYes').onclick=()=>askEnd(true);
 document.getElementById('askNo').onclick=()=>askEnd(false);
 document.getElementById('askModal').addEventListener('click',e=>{ if(e.target.id==='askModal') askEnd(false); });
 
+/* ═══════════════ 天時 ═══════════════
+   節氣不是查表,是算出來的:太陽的視黃經每走 15° 換一個節氣(春分 = 0°)。
+   低精度公式(天文年曆)誤差約 0.01°,換算成時間約一刻鐘以內。 */
+const TERMS='春分 清明 穀雨 立夏 小滿 芒種 夏至 小暑 大暑 立秋 處暑 白露 秋分 寒露 霜降 立冬 小雪 大雪 冬至 小寒 大寒 立春 雨水 驚蟄'.split(' ');
+function sunLongitude(date){
+  const n=date.getTime()/86400000+2440587.5-2451545.0;            // 距 J2000.0 的日數
+  const L=280.460+0.9856474*n, g=(357.528+0.9856003*n)*Math.PI/180; // 平黃經、平近點角
+  const lam=L+1.915*Math.sin(g)+0.020*Math.sin(2*g);               // 加上中心差 → 視黃經
+  return ((lam%360)+360)%360;
+}
+const solarTerm=d=>TERMS[Math.floor(sunLongitude(d)/15)];
+const shichen=d=>'子丑寅卯辰巳午未申酉戌亥'[Math.floor(((d.getHours()+1)%24)/2)]+'時';
+const spaced=t=>[...t].join(' ');
+const skyLine=(d=new Date())=>spaced(solarTerm(d))+' · '+spaced(shichen(d));
+function paintSky(){ const e=document.getElementById('hdSky'); if(e) e.textContent=skyLine(); }
+
+/* ═══════════════ 入門 ═══════════════ */
+function enterGate(){
+  const gate=document.getElementById('gate');
+  if(!document.documentElement.classList.contains('gating')) return;
+  try{ localStorage.setItem('sean_rpg_entered', todayStr()); }catch(e){}
+  const d=gameNow();
+  document.getElementById('gateDate').textContent=cnNum(d.getMonth()+1)+'月'+dayNum(d.getDate())+'日';
+  document.getElementById('gateSky').textContent=skyLine();
+  gate.classList.add('show');
+  let gone=false;
+  const leave=()=>{ if(gone) return; gone=true; gate.classList.add('out');
+    setTimeout(()=>{ document.documentElement.classList.remove('gating'); gate.className='gate'; },460); };
+  setTimeout(leave,1450);
+  gate.addEventListener('pointerdown',leave,{once:true});
+}
+
 /* ═══════════════ 材質 ═══════════════ */
 const MAT={ ready:false, dpr:Math.min(3, window.devicePixelRatio||1) };
 const VERM='#C33B2A', GOLD='#A08A4F', ONSEAL='#EFE9DC';
@@ -1405,6 +1466,7 @@ function render(){
   const since = S.since || S.date || todayStr();
   const day = Math.floor((parseKey(S.date) - parseKey(since))/86400000) + 1;
   document.getElementById('hdDay').textContent = '修 行 第 '+cnNum(Math.max(1,day))+' 日';
+  paintSky();
 
   const doneN = DAILY.filter(q=>S.daily[q.id]).length;
   const hdT=document.getElementById('hdToday');
@@ -1412,6 +1474,7 @@ function render(){
   hdT.classList.toggle('full', doneN===DAILY.length);
   document.getElementById('hdExp').textContent = 'EXP ' + expNum(S.exp);
   document.getElementById('dailyN').textContent = cnNum(doneN)+' 印 / '+cnNum(DAILY.length);
+  document.getElementById('firstHint').classList.toggle('show', S.since===S.date && doneN===0);
 
   /* 一筆墨痕 */
   document.getElementById('rateNum').textContent = S.rate;
