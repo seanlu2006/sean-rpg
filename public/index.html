@@ -225,7 +225,10 @@ button{font-family:inherit;color:inherit}
 .bell .body{width:56px;height:48px;margin:0 auto;background:var(--ink);border-radius:8px 8px 22px 22px;
   position:relative;cursor:pointer;transform-origin:top center;border:none;padding:0}
 .bell .body::after{content:"";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:10px;height:10px;background:var(--ink);border-radius:50%}
-.bell .body.ring{animation:ring .7s ease-in-out}
+.bell{overflow:hidden}
+.bell .body{z-index:1;will-change:transform}
+/* 音紋:鐘聲在紙上漾開(靜音的手機也「看得見」聲音) */
+.bell .wave{position:absolute;width:64px;height:64px;border:1px solid var(--ink);border-radius:50%;pointer-events:none;opacity:0;z-index:0}
 @keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(7deg)}45%{transform:rotate(-6deg)}70%{transform:rotate(3deg)}}
 .bell .cap{font-size:13px;margin-top:16px;color:var(--ink-soft);letter-spacing:.08em;line-height:1.9}
 .bell .cnt{font-size:10px;color:var(--faint);letter-spacing:.3em;margin-top:8px}
@@ -264,7 +267,10 @@ button{font-family:inherit;color:inherit}
 /* ── 收盤儀式(封存) ── */
 .close{margin:30px 0 0;padding:22px 18px;border:1px solid var(--ink);text-align:center;position:relative}
 .close .label{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--paper);padding:0 14px;font-size:10px;letter-spacing:.5em;color:var(--faint)}
-.incense-wrap{display:flex;justify-content:center;align-items:flex-end;height:80px;margin:8px 0 14px}
+.incense-wrap{position:relative;display:flex;justify-content:center;align-items:flex-end;height:150px;margin:8px 0 14px}
+/* 香煙:畫布往上延伸,煙會飄過框線、升到掛軸前(床之間的構圖) */
+#smokeCanvas{position:absolute;left:-18px;top:-118px;width:calc(100% + 36px);height:calc(100% + 118px);pointer-events:none}
+.close{touch-action:pan-y}
 .incense{width:4px;height:70px;background:var(--ink);position:relative;border-radius:2px}
 .incense::before{content:"";position:absolute;top:-2px;left:-2px;width:8px;height:8px;
   background:radial-gradient(circle,#E0642F,rgba(224,100,47,0) 70%);border-radius:50%;animation:ember 1.8s ease-in-out infinite}
@@ -506,7 +512,7 @@ body.sealed .sealnote{display:block}
   <!-- 收盤儀式 -->
   <div class="close" id="closeBox">
     <div class="label">收 盤 儀 式</div>
-    <div class="incense-wrap"><div class="incense"></div></div>
+    <div class="incense-wrap" id="incenseWrap"><canvas id="smokeCanvas" aria-hidden="true"></canvas><div class="incense" id="incense"></div></div>
     <div class="d">點香一炷(廿五分)。香盡,落最後一印,<br>本日封存,不可再改。</div>
     <button class="btn" id="sealBtn">封 存</button>
     <div class="sealnote">本 日 已 封 存</div>
@@ -567,6 +573,13 @@ body.sealed .sealnote{display:block}
         <button data-theme="auto">隨 系 統</button>
         <button data-theme="light">晝</button>
         <button data-theme="dark">夜</button>
+      </div>
+    </div>
+    <div class="fld">
+      <label>聲</label>
+      <div class="seg" id="soundRow">
+        <button data-sound="on">有</button>
+        <button data-sound="off">無</button>
       </div>
     </div>
     <div class="fld"><label>通 行 碼</label><input id="cfgKey" type="password" placeholder="你設定的那組通行碼" autocomplete="off"></div>
@@ -864,7 +877,30 @@ const Ink = (() => {
     v.globalAlpha = .74; v.drawImage(C, 0, 0); v.globalAlpha = 1; v.drawImage(H, 0, 0);
   }
 
-  return { rng, hash, vnoise, vnoise3, fbm, smooth, parseColor, rgba, canvas, paperMask, seal, stroke, paint };
+  const bellCache = new Map();
+  function bell(rgb, w, h){
+    const key = rgb.join(',') + '|' + w + 'x' + h; if (bellCache.has(key)) return bellCache.get(key);
+    const k = 3, W = w * k, H = h * k, c = canvas(W, H), x = c.getContext('2d'), tex = inkTex(), r = rng(77);
+    const rt = 8 * k, rb = 22 * k;
+    x.beginPath(); x.moveTo(rt, 0); x.lineTo(W - rt, 0); x.quadraticCurveTo(W, 0, W, rt);
+    x.lineTo(W, H - rb); x.quadraticCurveTo(W, H, W - rb, H); x.lineTo(rb, H); x.quadraticCurveTo(0, H, 0, H - rb);
+    x.lineTo(0, rt); x.quadraticCurveTo(0, 0, rt, 0); x.closePath();
+    x.fillStyle = rgba(rgb, 1); x.fill();
+    const img = x.getImageData(0, 0, W, H), d = img.data;
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++){
+      const p = (j * W + i) * 4; if (!d[p + 3]) continue;
+      const u = i / W, v = j / H, tx = (i * 1.3 | 0) & (IN - 1), ty = (j * 1.3 + 40 | 0) & (IN - 1);
+      let a = .93 + .16 * (tex[ty * IN + tx] - .75);
+      // 乾筆高光:左側一道直向、斷續的留白
+      const band = Math.exp(-Math.pow((u - .29) / .095, 2)) * (.45 + .55 * smooth(.3, .62, vnoise(i * .5, j * .03, 41)));
+      a -= band * .36 * smooth(.08, .3, v) * (1 - smooth(.75, .95, v));
+      a += .16 * (1 - smooth(0, .06, Math.min(u, 1 - u)));     // 兩側邊緣積墨
+      d[p + 3] = Math.max(0, Math.min(1, a)) * 255 * (.93 + .07 * r());
+    }
+    x.putImageData(img, 0, 0);
+    const url = c.toDataURL('image/png'); bellCache.set(key, url); return url;
+  }
+  return { rng, hash, vnoise, vnoise3, fbm, smooth, parseColor, rgba, canvas, paperMask, seal, stroke, paint, bell };
 })();
 
 /* ═══════════════ 資料定義 ═══════════════ */
@@ -1113,6 +1149,7 @@ async function init(){
   repairStreak();
   render();
   materialsReady().then(render);
+  Smoke.init();
   if(window.ResizeObserver){ new ResizeObserver(()=>{ if(S){ paintRate(); paintChart(); } }).observe(document.querySelector('.wrap')); }
   if(repairNote) setTimeout(()=>toast(repairNote), 600);
   if(backend!=='cloud' && hasLS() && !localStorage.getItem('sean_rpg_hint')){
@@ -1162,10 +1199,14 @@ function applyTheme(){
   const m=document.querySelector('meta[name="theme-color"]');
   if(m) m.setAttribute('content', dark?'#1A1713':'#EFE9DC');
   document.querySelectorAll('#themeRow button').forEach(b=>b.classList.toggle('on', b.dataset.theme===p));
-  if(typeof S!=='undefined' && S){ paintRate(); paintChart(); }
+  if(typeof S!=='undefined' && S){ paintRate(); paintChart(); Smoke.recolor(); }
 }
 document.querySelectorAll('#themeRow button').forEach(b=>{
   b.onclick=()=>{ try{ localStorage.setItem(THEMEKEY,b.dataset.theme); }catch(e){} applyTheme(); };
+});
+function applySound(){ const on=soundOn(); document.querySelectorAll('#soundRow button').forEach(b=>b.classList.toggle('on',(b.dataset.sound==='on')===on)); }
+document.querySelectorAll('#soundRow button').forEach(b=>{
+  b.onclick=()=>{ try{ localStorage.setItem(SOUNDKEY,b.dataset.sound); }catch(e){} applySound(); if(b.dataset.sound==='on') Snd.stamp(); };
 });
 /* 掛著沒關、系統到了晚上自己翻的時候要跟上 */
 if(window.matchMedia){
@@ -1360,9 +1401,11 @@ function render(){
   document.getElementById('dustWarn').classList.toggle('show', S.prep>=3);
 
   document.getElementById('bellCnt').textContent = '本 月 鐘 響 · '+cnNum(S.bells[monthStr()]||0)+' 回';
+  if(MAT.ready){ const bb=document.getElementById('bellBody'); try{ bb.style.background='url('+Ink.bell(inkRGB(),56,48)+') center/100% 100% no-repeat'; }catch(e){} }
 
   document.body.classList.toggle('sealed', S.sealed===S.date);
   document.getElementById('closeBox').classList.toggle('sealed', S.sealed===S.date);
+  Smoke.setEmit(S.sealed!==S.date);   // 封存 = 香盡,不再生煙
 
   bindRows();
 }
@@ -1462,7 +1505,64 @@ function ac(){
 /* AudioContext 第一次建立要幾十到上百毫秒。手指按下(pointerdown)就先建好,
    等手指抬起、落印發生時,聲音已經就位 —— 第一印不會因此慢半拍 */
 ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ if(!AC) ac(); },{capture:true,passive:true}));
-/* 物的聲音:低頻、短、不清脆 */
+/* ═══════════════ 聲:物的聲音,在一間木造的廳堂裡 ═══════════════ */
+const SOUNDKEY='sean_rpg_sound';
+const soundOn=()=>{ try{ return localStorage.getItem(SOUNDKEY)!=='off'; }catch(e){ return true; } };
+const Snd=(()=>{
+  let bus=null, rev=null;
+  function hall(c){
+    if(bus) return bus;
+    bus=c.createGain(); bus.gain.value=.9; bus.connect(c.destination);
+    /* 程序生成的殘響:約 1.8 秒、指數衰減的雜訊,就是一間木頭房間的回聲 */
+    const len=Math.floor(c.sampleRate*1.8), ir=c.createBuffer(2,len,c.sampleRate);
+    for(let ch=0;ch<2;ch++){ const d=ir.getChannelData(ch);
+      for(let i=0;i<len;i++){ const t=i/c.sampleRate; d[i]=(Math.random()*2-1)*Math.exp(-t/.42)*(t<.006?t/.006:1); } }
+    rev=c.createConvolver(); rev.buffer=ir;
+    const wet=c.createGain(); wet.gain.value=.3; rev.connect(wet); wet.connect(c.destination);
+    return bus;
+  }
+  function out(c,send){ const b=hall(c), g=c.createGain(); g.connect(b);
+    if(send){ const sg=c.createGain(); sg.gain.value=send; g.connect(sg); sg.connect(rev); } return g; }
+  function env(c,g,t,peak,att,dec){ g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(peak,t+att); g.gain.exponentialRampToValueAtTime(.0001,t+dec); }
+  function thump(c,o,t,f0,f1,sweep,peak,dec){
+    const osc=c.createOscillator(), g=c.createGain();
+    osc.frequency.setValueAtTime(f0,t); osc.frequency.exponentialRampToValueAtTime(f1,t+sweep);
+    env(c,g,t,peak,.002,dec); osc.connect(g); g.connect(o); osc.start(t); osc.stop(t+dec+.05);
+  }
+  function hiss(c,o,t,dur,peak,type,freq,q){
+    const len=Math.max(1,Math.floor(c.sampleRate*dur)), b=c.createBuffer(1,len,c.sampleRate), d=b.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    const src=c.createBufferSource(); src.buffer=b;
+    const f=c.createBiquadFilter(); f.type=type; f.frequency.value=freq; if(q) f.Q.value=q;
+    const g=c.createGain(); env(c,g,t,peak,.001,dur);
+    src.connect(f); f.connect(g); g.connect(o); src.start(t); src.stop(t+dur+.02);
+  }
+  const go=fn=>{ if(!soundOn()) return; const c=ac(); if(!c) return; try{ fn(c,c.currentTime); }catch(e){} };
+  return {
+    /* 落印:印章壓上紙、壓在木桌上——一聲短而低的「頓」 */
+    stamp:()=>go((c,t)=>{ const o=out(c,.1);
+      thump(c,o,t,190,68,.07,.22,.15); hiss(c,o,t,.05,.07,'lowpass',1400); hiss(c,o,t,.006,.02,'highpass',3500); }),
+    /* 皆印:更低、更重,帶半秒餘韻 */
+    allSeal:()=>go((c,t)=>{ const o=out(c,.45);
+      thump(c,o,t,130,42,.18,.32,.7); thump(c,o,t,52,50,.3,.16,.95); hiss(c,o,t,.13,.09,'lowpass',700); }),
+    /* 鐘:鐘的泛音不是整數倍。每個泛音拆成兩個略差的頻率 → 拍音,梵鐘那種「嗡——嗡——」 */
+    bell:()=>go((c,t)=>{ const o=out(c,.55), f0=180;
+      [[.5,.30,4.8],[1,.55,3.6],[1.19,.30,2.9],[1.51,.16,2.4],[2,.30,2.0],[2.51,.10,1.4],[2.66,.08,1.2],[3.01,.05,.9]]
+        .forEach(([r,a,d])=>[-.7,.7].forEach(det=>{
+          const osc=c.createOscillator(), g=c.createGain();
+          osc.frequency.value=f0*r+det*(1+r*.4); env(c,g,t,a*.07,.006,d);
+          osc.connect(g); g.connect(o); osc.start(t); osc.stop(t+d+.05); }));
+      hiss(c,o,t,.02,.05,'bandpass',2600,1.2); }),
+    /* 封存:紙翻過去的一刷 */
+    paper:()=>go((c,t)=>{ const o=out(c,.15);
+      hiss(c,o,t,.16,.05,'bandpass',900,.8); hiss(c,o,t+.11,.2,.04,'bandpass',2200,.9); }),
+    /* 籤筒:竹籤互相敲擊 */
+    rattle:(k)=>go((c,t)=>{ const o=out(c,.2); let tt=t;
+      for(let i=0;i<(k||7);i++){ tt+=.018+Math.random()*.03; hiss(c,o,tt,.012,.04+Math.random()*.04,'bandpass',1800+Math.random()*1400,6); } }),
+    tok:()=>go((c,t)=>{ const o=out(c,.25); thump(c,o,t,980,620,.03,.08,.08); hiss(c,o,t,.01,.04,'bandpass',2400,5); })
+  };
+})();
+/* 舊介面保留(呼叫點不變) */
 function tone(freq, dur, peak, type){
   const c=ac(); if(!c) return;
   try{
@@ -1488,11 +1588,21 @@ function noise(dur, peak, hp){
     src.start();
   }catch(e){}
 }
-function sfxStamp(){  tone(120,0.09,0.09,'sine'); noise(0.03,0.02,900); }        /* 落印 */
-function sfxAllSeal(){ tone(88,0.6,0.13,'sine'); tone(176,0.35,0.05,'sine'); }   /* 皆印 */
-function sfxBell(){   tone(180,1.2,0.10,'sine'); tone(486,0.8,0.035,'sine'); }   /* 鐘 */
-function sfxSeal(){   noise(0.22,0.05,1200); }                                    /* 封存:紙刷 */
-function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+function sfxStamp(){  Snd.stamp(); }
+function sfxAllSeal(){ Snd.allSeal(); }
+function sfxBell(){   Snd.bell(); }
+function sfxSeal(){   Snd.paper(); }
+/* 觸覺:Android 用 Vibration API;iOS 沒有這個 API,但 iOS 18 起切換 <input switch> 會觸發系統觸覺。
+   必須發生在使用者手勢之內,所以只會在落印、敲鐘那一下生效 */
+function haptic(){
+  try{ const l=document.createElement('label'); l.setAttribute('aria-hidden','true'); l.style.display='none';
+       const i=document.createElement('input'); i.type='checkbox'; i.setAttribute('switch',''); l.appendChild(i);
+       document.head.appendChild(l); l.click(); l.remove(); }catch(e){}
+}
+function buzz(p){
+  try{ if(navigator.vibrate){ navigator.vibrate(p); return; } }catch(e){}
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)) haptic();
+}
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
 
@@ -1667,12 +1777,38 @@ document.getElementById('ratePlus').onclick=()=>{
 };
 document.getElementById('rateMinus').onclick=()=>{ rollover(); if(locked()) return; S.rate=Math.max(0,S.rate-5); scheduleSave(); render(); };
 
-/* 鐘 */
-document.getElementById('bellBody').onclick=()=>{
+/* 鐘:阻尼擺。點左半邊往右盪、點右半邊往左盪;連敲會越盪越大 */
+const Bell={ th:0, w:0, raf:0, last:0 };
+function bellSwing(dir){
+  if(reduceMotion()) return;
+  Bell.w += dir*2.4;
+  if(!Bell.raf){ Bell.last=performance.now(); Bell.raf=requestAnimationFrame(bellStep); }
+}
+function bellStep(now){
+  const b=document.getElementById('bellBody'), dt=Math.min(.033,(now-Bell.last)/1000); Bell.last=now;
+  Bell.w += (-49*Math.sin(Bell.th) - 3.2*Bell.w)*dt;     // θ'' = −ω²·sinθ − c·θ'
+  Bell.th += Bell.w*dt;
+  if(Math.abs(Bell.th)<.002 && Math.abs(Bell.w)<.02){ Bell.th=0; Bell.w=0; b.style.transform=''; Bell.raf=0; return; }
+  b.style.transform='rotate('+Bell.th.toFixed(4)+'rad)';
+  Bell.raf=requestAnimationFrame(bellStep);
+}
+function bellWaves(){
+  if(reduceMotion()) return;
+  const bell=document.querySelector('.bell'), body=document.getElementById('bellBody');
+  const br=bell.getBoundingClientRect(), r=body.getBoundingClientRect();
+  const x=r.left-br.left+r.width/2-32, y=r.top-br.top+r.height*.55-32;
+  for(let i=0;i<3;i++){
+    const w=document.createElement('span'); w.className='wave'; w.style.left=x+'px'; w.style.top=y+'px'; bell.appendChild(w);
+    const a=w.animate([{transform:'scale(.6)',opacity:.4},{transform:'scale(3.6)',opacity:0}],
+      {duration:1800, delay:i*190, easing:'cubic-bezier(.2,.6,.3,1)', fill:'both'});
+    a.onfinish=()=>w.remove();
+  }
+}
+document.getElementById('bellBody').onclick=(e)=>{
   rollover();
   if(locked()) return;
-  const b=document.getElementById('bellBody');
-  b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring');
+  const b=document.getElementById('bellBody'), r=b.getBoundingClientRect();
+  bellSwing(e && e.clientX && e.clientX>r.left+r.width/2 ? -1 : 1); bellWaves();
   S.recTotal+=1;
   const m=monthStr(); S.bells[m]=(S.bells[m]||0)+1;
   document.getElementById('bellMsg').textContent=BELLMSG[S.recTotal%BELLMSG.length];
@@ -1688,6 +1824,119 @@ document.getElementById('dustMinus').onclick=()=>{
   if(S.prep>0){ S.prep-=1; if(S.prep===0){ toast('塵已拂去 · 你推出去了什麼?'); sfxStamp(); } }
   scheduleSave(); render();
 };
+
+/* ═══════════════ 香煙 ═══════════════
+   粒子沿「旋度雜訊」流場上升:流場無散度,煙只會捲、不會憑空聚散。
+   貼近火點時亂流趨近於零 → 一縷直直的細線;升高後亂流漸強 → 斷成捲曲的煙帶。
+   手指劃過會擾動它。只在畫面內、分頁在前景時才跑;封存後不再生煙,最後一縷自己散掉。 */
+const Smoke=(()=>{
+  const N=1100, px=new Float32Array(N), py=new Float32Array(N), vx=new Float32Array(N), vy=new Float32Array(N), age=new Float32Array(N), life=new Float32Array(N), sd=new Float32Array(N);
+  let n=0, head=0, cv=null, ctx=null, W=0, H=0, dpr=1, ex=0, ey=0, raf=0, last=0, time=0, acc=0;
+  let emit=true, inView=false, rgb=[38,34,28];
+  const ptr={ x:-999, y:-999, vx:0, vy:0, t:0 };
+  const NB=7, bx=[], by=[], tx=[], ty=[];   // 依濃淡分桶,一桶一次 stroke(快)
+  function measure(){
+    if(!cv) return false;
+    const w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return false;
+    dpr=Math.min(2,MAT.dpr); const pw=Math.round(w*dpr), ph=Math.round(h*dpr);
+    if(cv.width!==pw||cv.height!==ph){ cv.width=pw; cv.height=ph; }
+    W=w; H=h;
+    const cr=cv.getBoundingClientRect(), ir=document.getElementById('incense').getBoundingClientRect();
+    ex=ir.left-cr.left+ir.width/2; ey=ir.top-cr.top-1;
+    rgb=inkRGB();
+    return true;
+  }
+  function spawn(){ const i=head; head=(head+1)%N; if(n<N) n++;
+    px[i]=ex+(Math.random()-.5)*.35; py[i]=ey; vx[i]=0; vy[i]=-30; age[i]=0; life[i]=7+Math.random()*3.5; sd[i]=Math.random(); }
+  function step(dt){
+    time+=dt;
+    if(emit){ acc+=dt*75; while(acc>=1){ spawn(); acc-=1; } }
+    const sc=.019, e=1.5, es=e*sc, T=time*.55, rise=time*21, pOn=performance.now()-ptr.t<160;
+    const sway=Math.sin(time*.21+1.3)*.6+Math.sin(time*.53)*.4;   // 室內極微的氣流
+    let alive=0;
+    for(let i=0;i<n;i++){
+      if(age[i]>=life[i]) continue; alive++;
+      age[i]+=dt;
+      const h=ey-py[i];
+      /* 層流 → 紊流:火點上方四十像素內幾乎筆直,之後擾動漸強 */
+      const turb=Ink.smooth(28,170,h)*62 + Ink.smooth(0,28,h)*1.5;
+      const x=px[i]*sc, y=(py[i]+rise)*sc;
+      const cxl=(Ink.vnoise3(x,y+es,T,5)-Ink.vnoise3(x,y-es,T,5))/(2*e), cyl=-(Ink.vnoise3(x+es,y,T,5)-Ink.vnoise3(x-es,y,T,5))/(2*e);
+      const fx=cxl*turb*34 + sway*7*Ink.smooth(30,160,h);
+      const fy=-(27-17*Ink.smooth(0,190,h)) + cyl*turb*34;          // 越高越冷、浮力越小
+      const k=Math.min(1,dt*(h<28?9:2.0));                            // 低處緊貼流場,高處有慣性 → 會捲
+      vx[i]+=(fx-vx[i])*k; vy[i]+=(fy-vy[i])*k;
+      if(h>60){ vx[i]+=(Math.random()-.5)*6*dt*60*.05; }             // 擴散
+      if(pOn){ const dx=px[i]-ptr.x, dy=py[i]-ptr.y, d=Math.hypot(dx,dy);
+        if(d<52){ const q=(1-d/52)*(1-d/52)*dt*7; vx[i]+=(ptr.vx*.85+dx/(d+1)*46)*q; vy[i]+=(ptr.vy*.85+dy/(d+1)*46)*q; } }
+      px[i]+=vx[i]*dt; py[i]+=vy[i]*dt;
+    }
+    return alive;
+  }
+  /* 點源的煙,物理上就是一條「流跡線」:所有曾經經過火點的空氣粒子連起來。
+     年輕的一段畫成細線(煙絲);老的一段已經擴散,沿同一條線鋪柔和的墨暈 */
+  let blob=null, blobKey='';
+  function blobSprite(){ const k=rgb.join(','); if(blob && k===blobKey) return; blobKey=k;
+    const S=40; blob=Ink.canvas(S,S); const g=blob.getContext('2d'), gr=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+    gr.addColorStop(0,Ink.rgba(rgb,1)); gr.addColorStop(.5,Ink.rgba(rgb,.45)); gr.addColorStop(1,Ink.rgba(rgb,0)); g.fillStyle=gr; g.fillRect(0,0,S,S); }
+  function draw(){
+    blobSprite();
+    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height); ctx.setTransform(dpr,0,0,dpr,0,0);
+    const first=n<N?0:head;
+    // 墨暈:老的煙
+    let acc=0, lx=0, ly=0, has=false;
+    for(let k=0;k<n;k++){ const i=(first+k)%N, a=age[i], L=life[i]; if(a>=L || a<1.6){ has=false; continue; }
+      if(has){ acc+=Math.abs(px[i]-lx)+Math.abs(py[i]-ly); } lx=px[i]; ly=py[i];
+      if(has && acc<3.0) continue; acc=0; has=true;
+      const r=2+(a-1.6)*2.7, al=.042*Math.min(1,(a-1.6)/.9)*Math.min(1,(L-a)/1.2)/(1+(a-1.6)*.18);
+      ctx.globalAlpha=al; ctx.drawImage(blob,px[i]-r,py[i]-r,r*2,r*2);
+    }
+    // 煙絲:年輕的煙
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle=Ink.rgba(rgb,1);
+    const CH=10; let k=0;
+    while(k<n-1){
+      const i0=(first+k)%N, a=age[i0], L=life[i0];
+      if(a>=L || a>2.4){ k++; continue; }
+      ctx.globalAlpha=Math.min(1,a/.15+.3)*(.34/(1+a*.55))*Math.min(1,(2.4-a)/.8); ctx.lineWidth=.7+a*.38;
+      ctx.beginPath(); ctx.moveTo(px[i0],py[i0]);
+      let j=1;
+      for(;j<=CH && k+j<n;j++){ const i=(first+k+j)%N, ip=(first+k+j-1)%N;
+        if(age[i]>=life[i] || Math.abs(px[i]-px[ip])+Math.abs(py[i]-py[ip])>14) break;
+        ctx.lineTo(px[i],py[i]); }
+      ctx.stroke(); k+=Math.max(1,j);
+    }
+    ctx.globalAlpha=1;
+  }
+  function loop(now){
+    const dt=Math.min(.05,(now-last)/1000); last=now;
+    const alive=step(dt); draw();
+    if(inView && !document.hidden && (emit||alive>0)) raf=requestAnimationFrame(loop); else raf=0;
+  }
+  function kick(){ if(raf||reduceMotion()) return; if(!measure()) return; last=performance.now(); raf=requestAnimationFrame(loop); }
+  /* 不動的版本(減少動態):先在背景模擬八秒,畫出一縷靜止的煙 */
+  function still(){ if(!measure()) return; n=0; head=0; time=0; acc=0;
+    if(emit){ for(let k=0;k<240;k++) step(1/30); } draw(); }
+  return {
+    init(){
+      cv=document.getElementById('smokeCanvas'); if(!cv) return; ctx=cv.getContext('2d');
+      const box=document.getElementById('closeBox');
+      if(window.IntersectionObserver){
+        new IntersectionObserver(es=>{ inView=es[0].isIntersecting; if(inView) (reduceMotion()?still():kick()); },{rootMargin:'120px'}).observe(box);
+      } else { inView=true; kick(); }
+      document.addEventListener('visibilitychange',()=>{ if(!document.hidden && inView) kick(); });
+      const move=e=>{ const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+        if(x<0||y<0||x>r.width||y>r.height) return;
+        const now=performance.now(), dt=Math.max(16,now-ptr.t)/1000;
+        if(now-ptr.t<200){ ptr.vx=Math.max(-420,Math.min(420,(x-ptr.x)/dt)); ptr.vy=Math.max(-420,Math.min(420,(y-ptr.y)/dt)); } else { ptr.vx=0; ptr.vy=0; }
+        ptr.x=x; ptr.y=y; ptr.t=now; };
+      window.addEventListener('pointermove',move,{passive:true});
+      window.addEventListener('pointerdown',move,{passive:true});
+    },
+    setEmit(on){ if(on===emit) return; emit=on; if(on) (reduceMotion()?still():kick()); else if(reduceMotion() && cv) still(); },
+    recolor(){ if(cv && measure() && !raf) still(); },
+    stats:()=>({ n, emit, inView, running:!!raf })
+  };
+})();
 
 /* 封存:不可逆 */
 document.getElementById('sealBtn').onclick=async ()=>{
@@ -1709,7 +1958,7 @@ document.getElementById('setClose').onclick=()=>setModal.classList.remove('show'
 setModal.addEventListener('click',e=>{ if(e.target===setModal) setModal.classList.remove('show'); });
 function openSettings(){
   loadCfg();
-  applyTheme();
+  applyTheme(); applySound();
   document.getElementById('cfgKey').value=cfKey||'';
   setMark(document.getElementById('synMark').className, document.getElementById('synMark').textContent);
   setModal.classList.add('show');
