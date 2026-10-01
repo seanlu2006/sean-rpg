@@ -321,10 +321,36 @@ body.sealed .sealnote{display:block}
   transform:rotate(-3deg);box-shadow:2px 3px 0 var(--seal-shadow2);animation:press .5s cubic-bezier(.3,1.6,.5,1)}
 .allseal .big::after{content:"";position:absolute;inset:-6px;border:2px solid var(--seal-ring2);transform:rotate(2deg)}
 .allseal .skip{position:absolute;bottom:40px;font-size:10px;color:var(--faint);letter-spacing:.4em}
+/* 七印歸一:今日七枚印面飛向中央,合成一枚皆印 */
+.allseal.converge{background:transparent;transition:background .32s}
+.allseal.converge.lit{background:var(--allseal-bg)}
+.allseal.converge .flash,.allseal.converge .big{visibility:hidden;animation:none}
+.allseal.converge.hit .flash{visibility:visible;animation:flash .4s ease-out}
+.allseal.converge.hit .big{visibility:visible;animation:press .5s cubic-bezier(.3,1.6,.5,1)}
+.allseal .fly{position:fixed;z-index:3;pointer-events:none;will-change:transform}
+.allseal .big.real{background:none;box-shadow:none;width:190px;height:190px}
+.allseal .big.real::after{display:none}
+.allseal .big img{width:100%;height:100%;display:block}
+.allseal .quake{position:absolute;left:50%;top:50%;width:190px;height:190px;margin:-95px 0 0 -95px;border:1.5px solid var(--vermilion);
+  border-radius:12px;opacity:0;pointer-events:none}
 
 /* ── 籤詩 ── */
 .omikuji-back{position:fixed;inset:0;z-index:210;display:none;justify-content:center;align-items:flex-start;background:var(--scrim2)}
 .omikuji-back.show{display:flex}
+/* 籤筒:先搖出一支籤,再展開籤詩 */
+.kuji{display:none;flex-direction:column;align-items:center;gap:16px;align-self:center}
+.omikuji-back.tube{background:var(--allseal-bg)}
+.omikuji-back.tube .kuji{display:flex}
+.omikuji-back.tube .omikuji{display:none}
+.kuji .tube{position:relative;width:120px;height:196px;cursor:pointer;touch-action:manipulation}
+.kuji .tube canvas{position:absolute;left:0;top:0}
+#tubeCanvas{width:120px;height:196px;transform-origin:50% 92%}
+#stickCanvas{width:24px;height:132px;left:48px;top:-4px;opacity:0;pointer-events:none}
+.kuji .shake{border:1.5px solid var(--vermilion);background:none;color:var(--vermilion-text);font-size:14px;font-weight:900;
+  letter-spacing:.4em;padding:10px 26px 10px 30px;cursor:pointer}
+.kuji .shake:active{background:var(--vermilion);color:var(--on-seal)}
+.kuji .hint{font-size:11px;color:var(--faint);letter-spacing:.2em;min-height:18px}
+.omikuji .no{font-size:11px;color:var(--faint);letter-spacing:.35em;margin-bottom:10px;text-indent:.35em}
 .omikuji{width:210px;background:var(--paper);border:1px solid var(--ink);border-top:none;
   padding:calc(26px + env(safe-area-inset-top)) 18px 22px;text-align:center;
   animation:draw .7s cubic-bezier(.2,.9,.25,1)}
@@ -540,7 +566,16 @@ body.sealed .sealnote{display:block}
 
 <!-- 籤詩 -->
 <div class="omikuji-back" id="omikujiBack">
+  <div class="kuji" id="kuji">
+    <div class="tube" id="tube" role="button" tabindex="0" aria-label="搖籤筒">
+      <canvas id="stickCanvas" aria-hidden="true"></canvas>
+      <canvas id="tubeCanvas" aria-hidden="true"></canvas>
+    </div>
+    <button class="shake" id="kujiShake">搖 籤</button>
+    <div class="hint" id="kujiHint">搖動手機,或輕叩籤筒</div>
+  </div>
   <div class="omikuji">
+    <div class="no" id="omiNo"></div>
     <div class="grade" id="omiGrade"></div>
     <div class="body" id="omiBody"></div>
     <button class="take" id="omiTake">收</button>
@@ -1631,13 +1666,14 @@ function toggle(id,state,defs,isDaily,el){
   const listId = el && el.parentElement ? el.parentElement.id : '';
 
   const nowPerfect = isDaily && DAILY.every(x=>S.daily[x.id]);
+  let climax=false;
   if(!was && nowPerfect && S.lastPerfect!==S.date){
     S.streak += 1;
     if(S.streak>S.bestStreak) S.bestStreak=S.streak;
     S.lastPerfect=S.date;
     S.history[S.date]=true;
     checkAutoAch();
-    if(S.allSealDate!==S.date){ S.allSealDate=S.date; playAllSeal(); }
+    if(S.allSealDate!==S.date){ S.allSealDate=S.date; climax=true; }
   } else if(was && isDaily && S.lastPerfect===S.date){
     S.streak=Math.max(0,S.streak-1);
     S.lastPerfect=''; delete S.history[S.date];
@@ -1651,6 +1687,7 @@ function toggle(id,state,defs,isDaily,el){
     pressStamp(listId ? '#'+listId+' .row[data-id="'+id+'"] .stamp' : null);
     sfxStamp(); buzz(18);
   }
+  if(climax) playAllSeal();
 }
 
 /* 蓋印的頓挫:全產品手感之錨 */
@@ -1701,38 +1738,153 @@ function checkAutoAch(){
   if(S.rate>=100)    grant('a_power');
 }
 
-/* ═══════════════ 皆印 + 籤詩 ═══════════════ */
-let allSealTimer=null;
+/* ═══════════════ 皆印 + 籤筒 + 籤詩 ═══════════════
+   峰終定律:全產品只有這一刻是濃烈的。
+   第七印蓋完 → 七枚印面被吸向中央 → 一枚皆印砸下(朱閃、紙面一圈漣漪、輕震)
+   → 搖出一支籤 → 籤詩展開。全程可點擊跳過;減少動態時只留靜態的印與籤詩。 */
+let allSealTimers=[];
+const later=(ms,f)=>{ allSealTimers.push(setTimeout(f,ms)); };
 function playAllSeal(){
-  const box=document.getElementById('allSeal');
-  box.classList.add('show');
-  sfxAllSeal(); buzz([30,50,30,50,80]);
-  clearTimeout(allSealTimer);
-  allSealTimer=setTimeout(endAllSeal, 1500);
+  const box=document.getElementById('allSeal'), big=box.querySelector('.big');
+  allSealTimers.forEach(clearTimeout); allSealTimers=[];
+  box.querySelectorAll('.fly,.quake').forEach(e=>e.remove());
+  const url=sealURL('皆印','all|'+S.date,190);
+  if(url){ big.classList.add('real'); big.innerHTML=imgTag(url); } else { big.classList.remove('real'); big.textContent='皆印'; }
+  const stamps=[...document.querySelectorAll('#dailyList .row .stamp img')];
+  if(reduceMotion() || stamps.length<DAILY.length){
+    box.className='allseal show';
+    sfxAllSeal(); buzz([30,50,30,50,80]);
+    later(reduceMotion()?1100:1500, endAllSeal);
+    return;
+  }
+  later(240,()=>{
+    box.className='allseal show converge';
+    requestAnimationFrame(()=>box.classList.add('lit'));
+    const cx=innerWidth/2, cy=innerHeight/2;
+    stamps.forEach((im,i)=>{
+      const r=im.getBoundingClientRect(), c=im.cloneNode();
+      c.className='fly'; Object.assign(c.style,{ left:r.left+'px', top:r.top+'px', width:r.width+'px', height:r.height+'px' });
+      box.appendChild(c);
+      const dx=cx-(r.left+r.width/2), dy=cy-(r.top+r.height/2);
+      c.animate([{ transform:'translate(0,0) rotate(-3deg) scale(1)', opacity:1 },
+                 { transform:'translate('+dx+'px,'+dy+'px) rotate('+((i-3)*11)+'deg) scale(.55)', opacity:.85 }],
+                { duration:380, delay:i*30, easing:'cubic-bezier(.55,0,.85,.35)', fill:'forwards' });
+    });
+  });
+  later(240+380+6*30+10,()=>{
+    box.querySelectorAll('.fly').forEach(e=>e.remove());
+    box.classList.add('hit');
+    sfxAllSeal(); buzz([30,50,30,50,80]);
+    const q=document.createElement('div'); q.className='quake'; box.appendChild(q);
+    q.animate([{ transform:'rotate(-3deg) scale(.9)', opacity:.55 },{ transform:'rotate(-3deg) scale(2.4)', opacity:0 }],{ duration:700, easing:'cubic-bezier(.2,.7,.3,1)' }).onfinish=()=>q.remove();
+    big.animate([{ translate:'0 0' },{ translate:'-4px 2px' },{ translate:'3px -2px' },{ translate:'-2px 1px' },{ translate:'0 0' }],{ duration:240, delay:120 });
+  });
+  later(1500, endAllSeal);
 }
 function endAllSeal(){
-  clearTimeout(allSealTimer);
+  allSealTimers.forEach(clearTimeout); allSealTimers=[];
   const box=document.getElementById('allSeal');
   if(!box.classList.contains('show')) return;
-  box.classList.remove('show');
+  box.querySelectorAll('.fly,.quake').forEach(e=>e.remove());
+  box.className='allseal';
   drawOmikuji();
 }
 document.getElementById('allSeal').addEventListener('click', endAllSeal);
 
+/* ── 籤:六十甲子籤(台灣廟宇最常見的一套),籤號對應天干地支 ── */
+const STEMS='甲乙丙丁戊己庚辛壬癸', BRANCHES='子丑寅卯辰巳午未申酉戌亥';
+const Kuji={ n:0, shakes:0, done:false, motion:false, lastM:null, lastShake:0 };
 function drawOmikuji(){
   const r=Math.random();
   const tier = r<0.05?'legend' : r<0.30?'rare' : 'common';
   const pool=OMIKUJI[tier];
   const item=pool[Math.floor(Math.random()*pool.length)];
   const bonus = tier==='legend'?15 : tier==='rare'?5 : 2;
-  S.exp += bonus;
-  const g=document.getElementById('omiGrade');
-  g.textContent=OMIGRADE[tier];
+  S.exp += bonus; scheduleSave();                       // 先入帳:就算中途離開,這支籤也算數
+  Kuji.n=1+Math.floor(Math.random()*60); Kuji.shakes=0; Kuji.done=false;
+  document.getElementById('omiNo').textContent='第 '+cnNum(Kuji.n)+' 籤 · '+STEMS[(Kuji.n-1)%10]+BRANCHES[(Kuji.n-1)%12];
+  document.getElementById('omiGrade').textContent=OMIGRADE[tier];
   document.getElementById('omiBody').textContent=item.body;
-  document.getElementById('omikujiBack').classList.add('show');
-  scheduleSave();
+  const back=document.getElementById('omikujiBack');
+  if(reduceMotion() || !MAT.ready){ back.className='omikuji-back show'; return; }
+  paintTube(); document.getElementById('stickCanvas').style.opacity=0; document.getElementById('kujiShake').style.visibility='';
+  document.getElementById('kujiHint').textContent='搖動手機,或輕叩籤筒';
+  back.className='omikuji-back show tube';
 }
-document.getElementById('omiTake').onclick=()=>{ document.getElementById('omikujiBack').classList.remove('show'); render(); };
+/* 籤筒用同一支毛筆畫:筒身兩筆、筒底一筆、竹節兩筆、十幾支籤 */
+function paintTube(){
+  const cv=document.getElementById('tubeCanvas'), W=120, H=196, dpr=MAT.dpr;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const x=cv.getContext('2d'), ink=inkRGB();
+  const C=Ink.canvas(cv.width,cv.height), Hh=Ink.canvas(cv.width,cv.height), tmp=Ink.canvas(cv.width,cv.height), hc=Hh.getContext('2d');
+  const brush=(o,alpha)=>{ const st=Ink.stroke(o); hc.setTransform(1,0,0,1,0,0); hc.clearRect(0,0,Hh.width,Hh.height); hc.setTransform(dpr,0,0,dpr,0,0);
+    st.hair(hc,0,st.L,ink); Ink.paint(tmp,st,ink,st.L,{core:C,hair:Hh},dpr);
+    x.save(); x.setTransform(1,0,0,1,0,0); x.globalAlpha=alpha||1; x.drawImage(tmp,0,0); x.restore(); };   // tmp 已是裝置解析度,貼上時不能再乘一次 dpr
+  x.setTransform(dpr,0,0,dpr,0,0);
+  const top=70, bot=186, L=27, R=93, rr=Ink.rng(7), wall=getComputedStyle(document.documentElement).getPropertyValue('--paper2').trim()||'#E7E0D0';
+  x.fillStyle=Ink.rgba(ink,.24); x.beginPath(); x.ellipse(60,top,33,7,0,0,Math.PI*2); x.fill();   // 筒口裡面是暗的
+  x.strokeStyle=Ink.rgba(ink,.45); x.lineWidth=1.2; x.beginPath(); x.ellipse(60,top,33,7,0,Math.PI,Math.PI*2); x.stroke();
+  for(let i=0;i<14;i++){
+    const sx=36+i*3.6+(rr()-.5)*2, ty=top-18-rr()*26, tilt=(sx-60)*.12+(rr()-.5)*3;
+    brush({ x0:sx+tilt, y0:ty, x1:sx, y1:top+4, w:2.6, seed:'stick'+i, tail:'lift' }, .78);
+  }
+  // 筒的前壁是實的:擋住筒內的籤腳(含抽出來那一支的下半)
+  x.beginPath(); x.moveTo(L,top); x.ellipse(60,top,33,7,0,Math.PI,0,true); x.lineTo(R,bot); x.lineTo(L,bot); x.closePath();
+  x.fillStyle=wall; x.fill(); x.fillStyle=Ink.rgba(ink,.06); x.fill();
+  brush({ x0:L, y0:top+1, x1:L+1, y1:bot-2, w:4.6, seed:'tubeL', tail:'dew' });
+  brush({ x0:R, y0:top+1, x1:R-1, y1:bot-2, w:4.6, seed:'tubeR', tail:'dew' });
+  brush({ path:s=>({ x:L+1+s, y:bot-1+Math.sin(Math.PI*s/(R-L-2))*2.2 }), L:R-L-2, w:4, seed:'tubeB', tail:'lift' });
+  brush({ x0:L+3, y0:top+42, x1:R-3, y1:top+41, w:2.2, seed:'node1', tail:'lift' }, .55);
+  brush({ x0:L+3, y0:top+84, x1:R-3, y1:top+83, w:2.2, seed:'node2', tail:'lift' }, .55);
+  x.setTransform(dpr,0,0,dpr,0,0);
+  x.strokeStyle=Ink.rgba(ink,.9); x.lineWidth=2.2; x.beginPath(); x.ellipse(60,top,33,7,0,0,Math.PI); x.stroke();
+}
+function paintStick(){
+  const cv=document.getElementById('stickCanvas'), W=24, H=132, dpr=MAT.dpr; cv.width=W*dpr; cv.height=H*dpr;
+  const x=cv.getContext('2d'), ink=inkRGB(), st=getComputedStyle(document.documentElement);
+  x.setTransform(dpr,0,0,dpr,0,0);
+  x.fillStyle=st.getPropertyValue('--paper2').trim()||'#E7E0D0'; x.fillRect(5,2,14,H-4);
+  x.fillStyle=VERM; x.fillRect(5,2,14,16);
+  x.strokeStyle=Ink.rgba(ink,.85); x.lineWidth=1; x.strokeRect(5.5,2.5,13,H-5);
+  x.fillStyle=Ink.rgba(ink,1); x.textAlign='center'; x.textBaseline='middle'; x.font='900 10px "Zen Old Mincho","Noto Serif TC",serif';
+  const txt=['第',...cnNum(Kuji.n),'籤']; const y0=28, gap=Math.min(15,(H-y0-12)/txt.length);
+  txt.forEach((ch,i)=>x.fillText(ch,12,y0+i*gap));
+}
+function kujiShake(){
+  if(Kuji.done) return;
+  Kuji.shakes++;
+  Snd.rattle(5+Kuji.shakes*2);
+  const t=document.getElementById('tubeCanvas');
+  t.animate([{ transform:'rotate(0)' },{ transform:'rotate(-8deg)' },{ transform:'rotate(7deg)' },{ transform:'rotate(-4deg)' },{ transform:'rotate(0)' }],{ duration:340, easing:'ease-in-out' });
+  if(Kuji.shakes<3){ document.getElementById('kujiHint').textContent=Kuji.shakes===1?'再搖':'就快了'; return; }
+  Kuji.done=true;
+  document.getElementById('kujiHint').textContent='';
+  document.getElementById('kujiShake').style.visibility='hidden';
+  paintStick();
+  setTimeout(()=>{
+    Snd.tok(); buzz(20);
+    document.getElementById('stickCanvas').animate([{ transform:'translateY(46px) rotate(0)', opacity:0 },{ transform:'translateY(-26px) rotate(-4deg)', opacity:1, offset:.7 },{ transform:'translateY(-20px) rotate(-6deg)', opacity:1 }],{ duration:520, easing:'cubic-bezier(.2,.9,.3,1.2)', fill:'forwards' });
+  },300);
+  setTimeout(()=>{ document.getElementById('omikujiBack').className='omikuji-back show'; },1250);
+}
+async function kujiTap(){
+  // iOS 要使用者手勢才能取得動作感測器;取得之後,真的搖手機也算
+  if(!Kuji.motion && window.DeviceMotionEvent){
+    try{ if(typeof DeviceMotionEvent.requestPermission==='function'){ if(await DeviceMotionEvent.requestPermission()==='granted') Kuji.motion=true; } else Kuji.motion=true; }catch(e){}
+  }
+  buzz(12); kujiShake();
+}
+window.addEventListener('devicemotion',e=>{
+  if(!document.getElementById('omikujiBack').classList.contains('tube')) return;
+  const a=e.accelerationIncludingGravity||e.acceleration; if(!a) return;
+  const m=Math.hypot(a.x||0,a.y||0,a.z||0), now=performance.now();
+  if(Kuji.lastM!=null && Math.abs(m-Kuji.lastM)>11 && now-Kuji.lastShake>260){ Kuji.lastShake=now; kujiShake(); }
+  Kuji.lastM=m;
+});
+document.getElementById('kujiShake').onclick=kujiTap;
+document.getElementById('tube').onclick=kujiTap;
+document.getElementById('tube').onkeydown=e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); kujiTap(); } };
+document.getElementById('omiTake').onclick=()=>{ document.getElementById('omikujiBack').className='omikuji-back'; render(); };
 
 /* ═══════════════ 其餘互動 ═══════════════ */
 /* 日參 */
