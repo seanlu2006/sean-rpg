@@ -1211,7 +1211,7 @@ async function init(){
   rollover();
   repairStreak();
   render();
-  materialsReady().then(render);
+  materialsReady().then(()=>{ render(); prewarmSeals(); });
   Smoke.init();
   setInterval(paintSky, 60000);
   if(window.ResizeObserver){ new ResizeObserver(()=>{ if(S){ paintRate(); paintChart(); } }).observe(document.querySelector('.wrap')); }
@@ -1384,6 +1384,19 @@ function sealURL(text, seed, size, opt){
   try{ return Ink.seal(Object.assign({ text, seed, size, mode:'white', color:VERM, paper:ONSEAL }, opt||{})); }catch(e){ return ''; }
 }
 const imgTag=url=>url ? '<img alt="" src="'+url+'">' : '';
+/* 閒置時先把今天「還沒蓋」的印刻好(含皆印)——按下去的那一刻只剩查快取 */
+let prewarmKey='';
+function prewarmSeals(){
+  if(!MAT.ready || !S) return;
+  const key=S.date+'|'+S.week; if(key===prewarmKey) return; prewarmKey=key;
+  const jobs=[ ()=>sealURL('皆印','all|'+S.date,190), ()=>sealURL('印','day|'+S.date,20) ];
+  DAILY.forEach(q=>jobs.push(()=>sealURL('印', S.date+'|'+q.id, 36)));
+  WEEKLY.forEach(q=>jobs.push(()=>sealURL('週', S.week+'|'+q.id, 36)));
+  MAIN.forEach(q=>jobs.push(()=>sealURL(q.boss?'關':'試', 'main|'+q.id, 36, {round:true})));
+  const idle=window.requestIdleCallback || (f=>setTimeout(()=>f({timeRemaining:()=>8}),120));
+  const run=dl=>{ while(jobs.length && dl.timeRemaining()>4) jobs.shift()(); if(jobs.length) idle(run); };
+  idle(run);
+}
 const inkRGB=()=>Ink.parseColor(getComputedStyle(document.documentElement).getPropertyValue('--ink'));
 
 /* 一筆墨痕:自給率是一筆真的在走的毛筆。加五時,筆從上次停下的地方接著往前寫 */
@@ -1424,7 +1437,13 @@ function paintRate(){
 }
 
 /* 墨K線:七日落印數,每根都是一筆垂露豎;達標實墨、未達標淡墨、今日朱 */
-let chartKey='';
+let chartKey='', chartTimer=0;
+/* 落印時墨K線不是回饋本身,等頓挫播完、閒下來再重畫,不跟落印搶那幾毫秒 */
+function scheduleChart(){
+  if(!chartKey){ paintChart(); return; }
+  clearTimeout(chartTimer);
+  chartTimer=setTimeout(()=>{ (window.requestIdleCallback||(f=>f()))(()=>paintChart(),{timeout:500}); }, 360);
+}
 function paintChart(){
   const box=document.getElementById('inkbars'), cv=document.getElementById('inkCanvas'); if(!box||!cv) return;
   const today=todayStr(), data=[], keys=[];
@@ -1492,7 +1511,7 @@ function render(){
   document.getElementById('weeklyList').innerHTML = WEEKLY.map(q=>questRow(q,S.weekly,'週',S.week)).join('');
   document.getElementById('mainList').innerHTML   = MAIN.map(q=>questRow(q,S.main,'試','main',true)).join('');
 
-  renderChain(); paintChart(); renderJoin(); renderAch(); renderKake();
+  renderChain(); scheduleChart(); renderJoin(); renderAch(); renderKake();
 
   const bars=document.getElementById('dustBars').children;
   for(let i=0;i<3;i++) bars[i].classList.toggle('on', i<S.prep);
@@ -1602,7 +1621,7 @@ function ac(){
 }
 /* AudioContext 第一次建立要幾十到上百毫秒。手指按下(pointerdown)就先建好,
    等手指抬起、落印發生時,聲音已經就位 —— 第一印不會因此慢半拍 */
-['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ if(!AC) ac(); },{capture:true,passive:true}));
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ if(!AC||!Snd._warmed){ Snd.warm(); Snd._warmed=true; } },{capture:true,passive:true}));
 /* ═══════════════ 聲:物的聲音,在一間木造的廳堂裡 ═══════════════ */
 const SOUNDKEY='sean_rpg_sound';
 const soundOn=()=>{ try{ return localStorage.getItem(SOUNDKEY)!=='off'; }catch(e){ return true; } };
@@ -1637,6 +1656,8 @@ const Snd=(()=>{
   }
   const go=fn=>{ if(!soundOn()) return; const c=ac(); if(!c) return; try{ fn(c,c.currentTime); }catch(e){} };
   return {
+    /* 手指按下時就把聲音的空間(殘響)蓋好;第一次產生要十多萬個取樣,不能拖到落印那一刻 */
+    warm:()=>{ if(!soundOn()) return; const c=ac(); if(c) try{ hall(c); }catch(e){} },
     /* 落印:印章壓上紙、壓在木桌上——一聲短而低的「頓」 */
     stamp:()=>go((c,t)=>{ const o=out(c,.1);
       thump(c,o,t,190,68,.07,.22,.15); hiss(c,o,t,.05,.07,'lowpass',1400); hiss(c,o,t,.006,.02,'highpass',3500); }),
@@ -2218,7 +2239,7 @@ document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState!=='visible' || !S) return;
   const b=S.date, bw=S.week;
   rollover();
-  if(S.date!==b || S.week!==bw){ scheduleSave(); render(); }
+  if(S.date!==b || S.week!==bw){ scheduleSave(); render(); prewarmSeals(); }
 });
 window.addEventListener('beforeunload',()=>{ if(backend==='cloud'&&hasLS()){ try{ localStorage.setItem(LSKEY,JSON.stringify(S)); }catch(e){} } });
 
