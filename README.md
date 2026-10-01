@@ -6,9 +6,9 @@ A single-file daily dashboard, built to look like a Japanese dojo. It doesn't co
 
 **Live: [sean-rpg.pages.dev](https://sean-rpg.pages.dev)** — a PWA. Installable to a phone home screen, opens offline.
 
-![The dashboard, dark theme](docs/screenshot.png)
+![Four screens: today's seals under the self-funding brush stroke, the seven seals of a perfect day pulled into one, incense smoke in the dark theme, a fortune stick coming out of its cup](docs/screenshot.jpg)
 
-<sub>Sample data. Finishing a task presses a vermilion seal; the percentage at the top is the only progress bar that counts.</sub>
+<sub>Sample data. Left to right: today's seals under the self-funding brush stroke; the seven seals of a perfect day being pulled into one; incense smoke in the dark theme; a fortune stick coming out of its cup.</sub>
 
 ---
 
@@ -32,7 +32,21 @@ The other half of the reason: I'm learning to trade, and I needed somewhere that
 - **The day rolls at 04:00** — not midnight. Something finished at 2 a.m. counts for the previous day.
 - **Storage degrades in three steps** — cloud → localStorage → in-memory. No layer failing can stop you checking something off.
 
-There's also a bell you ring when you catch yourself lost in short-form video, a "dust" counter that fills up on days you only prepared and shipped nothing, a hanging scroll of quotes I can add to, and an omikuji fortune (70% / 25% / 5%) drawn once on each perfect day. Those are for me, and I use all of them.
+There's also a bell you ring when you catch yourself lost in short-form video, a "dust" counter that fills up on days you only prepared and shipped nothing, a hanging scroll of quotes I can add to, and a fortune stick (70% / 25% / 5%) shaken out of a cup once on each perfect day. Those are for me, and I use all of them.
+
+## How the materials are made
+
+The first version of this design drew every material flat. A seal was a red square, the brush stroke a CSS gradient, the bar chart a row of black rectangles, the bell a black silhouette. This version builds each one from a small model of how the real thing behaves. The layout, the daily flow and the save format didn't change.
+
+- **Paper.** A tileable mask of long kozo fibres and faint clouding, generated once at load and coloured by a CSS token, so one mask serves both themes. It scrolls with the page, because it is the page.
+- **Seals.** Each impression is carved at runtime. The outline is a squircle with a wavering edge and a few chips knocked out of it. Ink density is sampled from a shared texture, and where the ink runs thin it transfers as grain: the high points of the paper took ink, the low points didn't. The glyph is blurred and re-thresholded so a typeset Mincho character reads as carved. The seed is the date (or the week) plus the task, so a given day's seal never changes and tomorrow's is new. The four-character seals in the register read right to left, top to bottom, the way a seal carver lays them out.
+- **The brush.** The self-funding bar is one stroke from a bristle model: a centreline, a width profile with a pressed start, and about thirty hairs that each carry a different amount of ink. A brush holds a fixed load, so dryness starts at an absolute distance. Short strokes stay wet. The stroke at 100% runs out and breaks into dry-brush streaks (飛白). Add five and the brush carries on from where it stopped.
+- **The bell.** It swings as a damped pendulum, and three rings spread across the paper so the sound still shows on a muted phone. The tone is modal synthesis with bell partial ratios (0.5, 1, 1.19, 1.51, 2, 2.51 …). Each partial is two oscillators a hertz or two apart, which gives the slow beating of a temple bell. Every sound goes through one reverb built from decaying noise: a single small wooden room.
+- **Incense smoke.** Particles rise through a curl-noise field. That field is divergence-free, so smoke curls but never appears or vanishes on its own. The field drifts upward with the warm air, which turns disturbances into travelling waves: a straight laminar thread above the ember, then an S-curve, then curls. Smoke from a point source is a streakline, so the particles are joined in the order they left the ember. Older smoke is drawn as diffuse haze. A finger stirs it. It only runs while it's on screen and stops once the day is sealed.
+- **A perfect day.** The day's seven seals lift off their rows and get pulled into the centre, where one large 皆印 seal lands with a vermilion flash. Then a bamboo cup of fortune sticks: shake the phone, or tap it three times, and one stick comes out, numbered from the sixty-stick 甲子 set used in many Taiwanese temples.
+- **Season and hour.** The header shows the current solar term and the traditional two-hour period. The solar term is computed from the sun's ecliptic longitude (the low-precision almanac formula) rather than looked up. Against 2026's equinoxes and solstices it lands within 12 minutes.
+
+None of this added a dependency. It's Canvas 2D, Web Audio and CSS. Blurs are done by hand instead of with `ctx.filter`, so the seals don't depend on browser support for it. With Chrome's CPU throttled 6×, pressing a seal costs about 30 ms on the main thread, and the smoke and brush animations hold 60 fps. Seals that haven't been pressed yet are carved during idle time, so a press only reads a cache.
 
 ## Quick start
 
@@ -75,7 +89,7 @@ One HTML file on the front, one function on the back, one table in the database.
 
 | Layer | What | Why |
 |---|---|---|
-| Frontend | Single HTML file, 1,377 lines, CSS and JS inlined | No toolchain means no toolchain to rot. It'll still open in two years |
+| Frontend | Single HTML file, roughly 2,300 lines, CSS and JS inlined | No toolchain means no toolchain to rot. It'll still open in two years |
 | Hosting | Cloudflare Pages | Static hosting is free; a push deploys |
 | API | Pages Functions (`/api/save`) | Same origin as the frontend, so no CORS to deal with |
 | Database | Cloudflare D1 (SQLite) | One person's dashboard. One table, one row is enough |
@@ -154,7 +168,7 @@ These are trade-offs I chose, not a to-do list:
 - **Concurrent writes from two devices: last write wins.** There's no conflict detection. `updated_at` is stored, but nothing uses it yet — the frontend reads the response and throws that field away. One person almost never hits this; two tabs open at once will.
 - **One shared passphrase is the whole auth story.** The endpoint is public. The `.dev.vars` example above suggests twelve characters, but **nothing enforces it** — the frontend only checks the field isn't empty, and the backend has no minimum length. Fine for a tool I use myself; not an auth design I'd ship to anyone else.
 - **Saves are capped at 512K, over which the API returns 413.** The check is `text.length > 512*1024`, which counts UTF-16 code units, not bytes — so the constant name `MAX_BYTES` is wrong. For a save that's almost entirely Chinese, the real ceiling is closer to 1.5 MB of UTF-8. The frontend does nothing special with a 413; you'd just see the sync mark go to failed.
-- **iOS Safari needs one interaction before any sound plays**, which is the browser's autoplay policy. The light/dark preference is stored in localStorage only and never syncs — dark on my phone and light on my desktop should stay independent.
+- **iOS Safari needs one interaction before any sound plays**, which is the browser's autoplay policy. iPhones also have no Vibration API; on iOS 18 and later the panel tries the `<input type="checkbox" switch>` trick to get a system haptic, which I haven't confirmed on a real device. Shaking the phone to draw a fortune stick needs motion permission, and iOS only asks for it on a tap, so the first shake is always a tap (that tap also counts as a shake). The light/dark preference is stored in localStorage only and never syncs — dark on my phone and light on my desktop should stay independent.
 
 ## Known bugs
 
@@ -170,9 +184,9 @@ A few rules the visual side keeps on purpose. They're written down because they'
 
 - **Vermilion only ever means "you did it."** Never decoration, never a heading accent. Anything unfinished is a shade of ink.
 - **Gold appears exactly once in the entire system**: the highest achievement in the seal register. A second occurrence is a bug.
-- **Keep ambient motion near zero.** In principle only two things move on their own: the ember on the incense stick, and today's cell on the scroll. Everything else is triggered by the user. (There's still a third I haven't removed: the brush tip breathes when the percentage is within 5 of a milestone.)
+- **Keep ambient motion near zero.** In principle only two things move on their own: the ember on the incense stick, and today's cell on the scroll (which stops once the day is complete). Everything else is triggered by the user. Two exceptions remain. The brush tip breathes when the percentage is within 5 of a milestone, and the incense smoke moves while the closing ritual is on screen. I count the smoke as part of the ember: it stops once the day is sealed, and with reduced motion it's drawn as a still wisp.
 - No emoji, no monospace, no floating drop-shadow cards. Hierarchy comes from rules, whitespace and letter-spacing.
-- The press of a seal — animation, haptic buzz, low sine tone — is the anchor for how the whole thing feels. It must never become a fade-in or a checkmark.
+- The press of a seal is the anchor for how the whole thing feels: the animation, the haptic tick, and a short low thump like a stamp hitting paper on a wooden desk. It must never become a fade-in or a checkmark.
 
 ### A note on the typography
 
